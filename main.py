@@ -30,6 +30,7 @@ import board
 import neopixel
 import adafruit_bus_device
 
+
 # Color of the peak pixel.
 PEAK_COLOR = (100, 0, 255)
 # Number of total pixels - 10 build into Circuit Playground
@@ -76,7 +77,8 @@ def volume_color(volume):
 # Main program
 
 # Set up NeoPixels and turn them all off.
-pixels = neopixel.NeoPixel(board.NEOPIXEL, NUM_PIXELS, brightness=0.1, auto_write=False)
+
+pixels = neopixel.NeoPixel(board.D5, NUM_PIXELS, brightness=0.1, auto_write=False)
 pixels.fill(0)
 pixels.show()
 
