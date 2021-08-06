@@ -28,6 +28,7 @@ import math
 import audiobusio
 import board
 import neopixel
+import adafruit_bus_device
 
 # Color of the peak pixel.
 PEAK_COLOR = (100, 0, 255)
