@@ -29,6 +29,7 @@ import audiobusio
 import board
 import neopixel
 import adafruit_bus_device
+from analogio import AnalogIn
 
 
 # Color of the peak pixel.
@@ -78,7 +79,7 @@ def volume_color(volume):
 
 # Set up NeoPixels and turn them all off.
 
-pixels = neopixel.NeoPixel(board.D5, NUM_PIXELS, brightness=0.1, auto_write=False)
+pixels = neopixel.NeoPixel(board.D6, NUM_PIXELS, brightness=0.1, auto_write=False)
 pixels.fill(0)
 pixels.show()
 

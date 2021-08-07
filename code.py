@@ -4,10 +4,6 @@ import board
 import neopixel
 from analogio import AnalogIn
 
-from adafruit_featherwing import neopixel_featherwing
-
-neopixel = neopixel_featherwing.NeoPixelFeatherWing()
-
 led_pin = board.D6  # NeoPixel LED strand is connected to GPIO #0 / D0
 n_pixels = 32  # Number of pixels you are using
 dc_offset = 0  # DC offset in mic signal - if unusure, leave 0
@@ -29,8 +25,6 @@ vol = array.array("H", [0] * samples)
 mic_pin = AnalogIn(board.A2)
 
 strip = neopixel.NeoPixel(led_pin, n_pixels, brightness=0.1, auto_write=True)
-
-# strip = neopixel_featherwing.NeoPixelFeatherWing(led_pin, n_pixels)
 
 
 def wheel(pos):
