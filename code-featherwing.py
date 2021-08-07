@@ -3,10 +3,8 @@ import array
 import board
 import neopixel
 from analogio import AnalogIn
-
 from adafruit_featherwing import neopixel_featherwing
 
-neopixel = neopixel_featherwing.NeoPixelFeatherWing()
 
 led_pin = board.D6  # NeoPixel LED strand is connected to GPIO #0 / D0
 n_pixels = 32  # Number of pixels you are using
@@ -28,9 +26,9 @@ vol = array.array("H", [0] * samples)
 
 mic_pin = AnalogIn(board.A2)
 
-strip = neopixel.NeoPixel(led_pin, n_pixels, brightness=0.1, auto_write=True)
+# strip = neopixel.NeoPixel(led_pin, n_pixels, brightness=0.1, auto_write=True)
 
-# strip = neopixel_featherwing.NeoPixelFeatherWing(led_pin, n_pixels)
+strip = neopixel_featherwing.NeoPixelFeatherWing(led_pin, n_pixels)
 
 
 def wheel(pos):
@@ -84,7 +82,7 @@ while True:
         peak = height
 
         # Color pixels based on rainbow gradient
-    for i in range(0, len(strip)):
+    for i in range(0, 32):
         if i >= height:
             strip[i] = [0, 0, 0]
         else:
