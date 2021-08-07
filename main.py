@@ -1,133 +1,122 @@
-# The MIT License (MIT)
-#
-# Copyright (c) 2017 Dan Halbert for Adafruit Industries
-# Copyright (c) 2017 Kattni Rembor, Tony DiCola for Adafruit Industries
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
-
-# Feather rp2040 Sound Meter
-
 import array
-import math
-import audiobusio
+
 import board
 import neopixel
-import adafruit_bus_device
 from analogio import AnalogIn
 
+# Code from the Adafruit Peace Pendant project
 
-# Color of the peak pixel.
-PEAK_COLOR = (100, 0, 255)
-# Number of total pixels - 10 build into Circuit Playground
-NUM_PIXELS = 32
+led_pin = board.D6  # NeoPixel LED strand is connected to GPIO #0 / D0
+n_pixels = 12  # Number of pixels you are using
+dc_offset = 0  # DC offset in mic signal - if unusure, leave 0
+noise = 100  # Noise/hum/interference in mic signal
+samples = 60  # Length of buffer for dynamic level adjustment
+top = n_pixels + 1  # Allow dot to go slightly off scale
 
-# Exponential scaling factor.
-# Should probably be in range -10 .. 10 to be reasonable.
-CURVE = 2
-SCALE_EXPONENT = math.pow(10, CURVE * -0.1)
+peak = 0  # Used for falling dot
+dot_count = 0  # Frame counter for delaying dot-falling speed
+vol_count = 0  # Frame counter for storing past volume data
 
-# Number of samples to read at once.
-NUM_SAMPLES = 160
+lvl = 10  # Current "dampened" audio level
+min_level_avg = 0  # For dynamic adjustment of graph low & high
+max_level_avg = 512
 
+# Collection of prior volume samples
+vol = array.array("H", [0] * samples)
 
-# Restrict value to be between floor and ceiling.
-def constrain(value, floor, ceiling):
-    return max(floor, min(value, ceiling))
+mic_pin = AnalogIn(board.A2)
 
-
-# Scale input_value between output_min and output_max, exponentially.
-def log_scale(input_value, input_min, input_max, output_min, output_max):
-    normalized_input_value = (input_value - input_min) / (input_max - input_min)
-    return output_min + math.pow(normalized_input_value, SCALE_EXPONENT) * (
-        output_max - output_min
-    )
+strip = neopixel.NeoPixel(led_pin, n_pixels, brightness=0.1, auto_write=True)
 
 
-# Remove DC bias before computing RMS.
-def normalized_rms(values):
-    minbuf = int(mean(values))
-    samples_sum = sum(float(sample - minbuf) * (sample - minbuf) for sample in values)
-
-    return math.sqrt(samples_sum / len(values))
-
-
-def mean(values):
-    return sum(values) / len(values)
-
-
-def volume_color(volume):
-    return 200, volume * (255 // NUM_PIXELS), 0
+def wheel(pos):
+    # Input a value 0 to 255 to get a color value.
+    # The colours are a transition r - g - b - back to r.
+    if (pos < 0) or (pos > 255):
+        return (0, 0, 0)
+    if pos < 85:
+        return (int(pos * 3), int(255 - (pos * 3)), 0)
+    elif pos < 170:
+        pos -= 85
+        return (int(255 - pos * 3), 0, int(pos * 3))
+    pos -= 170
+    return (0, int(pos * 3), int(255 - pos * 3))
 
 
-# Main program
+def remap_range(value, leftMin, leftMax, rightMin, rightMax):
+    # this remaps a value from original (left) range to new (right) range
+    # Figure out how 'wide' each range is
+    leftSpan = leftMax - leftMin
+    rightSpan = rightMax - rightMin
 
-# Set up NeoPixels and turn them all off.
+    # Convert the left range into a 0-1 range (int)
+    valueScaled = int(value - leftMin) / int(leftSpan)
 
-pixels = neopixel.NeoPixel(board.D6, NUM_PIXELS, brightness=0.1, auto_write=False)
-pixels.fill(0)
-pixels.show()
+    # Convert the 0-1 range into a value in the right range.
+    return int(rightMin + (valueScaled * rightSpan))
 
-mic = audiobusio.PDMIn(
-    board.MICROPHONE_CLOCK, board.MICROPHONE_DATA, sample_rate=16000, bit_depth=16
-)
 
-# Record an initial sample to calibrate. Assume it's quiet when we start.
-samples = array.array("H", [0] * NUM_SAMPLES)
-mic.record(samples, len(samples))
-# Set lowest level to expect, plus a little.
-input_floor = normalized_rms(samples) + 10
-# OR: used a fixed floor
-# input_floor = 50
-
-# You might want to print the input_floor to help adjust other values.
-# print(input_floor)
-
-# Corresponds to sensitivity: lower means more pixels light up with lower sound
-# Adjust this as you see fit.
-input_ceiling = input_floor + 500
-
-peak = 0
 while True:
-    mic.record(samples, len(samples))
-    magnitude = normalized_rms(samples)
-    # You might want to print this to see the values.
-    # print(magnitude)
+    n = int((mic_pin.value / 65536) * 1000)  # 10-bit ADC format
+    n = abs(n - 512 - dc_offset)  # Center on zero
 
-    # Compute scaled logarithmic reading in the range 0 to NUM_PIXELS
-    c = log_scale(
-        constrain(magnitude, input_floor, input_ceiling),
-        input_floor,
-        input_ceiling,
-        0,
-        NUM_PIXELS,
-    )
+    if n >= noise:  # Remove noise/hum
+        n = n - noise
 
-    # Light up pixels that are below the scaled and interpolated magnitude.
-    pixels.fill(0)
-    for i in range(NUM_PIXELS):
-        if i < c:
-            pixels[i] = volume_color(i)
-        # Light up the peak pixel and animate it slowly dropping.
-        if c >= peak:
-            peak = min(c, NUM_PIXELS - 1)
-        elif peak > 0:
-            peak = peak - 1
-        if peak > 0:
-            pixels[int(peak)] = PEAK_COLOR
-    pixels.show()
+    # "Dampened" reading (else looks twitchy) - divide by 8 (2^3)
+    lvl = int(((lvl * 7) + n) / 8)
+
+    # Calculate bar height based on dynamic min/max levels (fixed point):
+    height = top * (lvl - min_level_avg) / (max_level_avg - min_level_avg)
+
+    # Clip output
+    if height < 0:
+        height = 0
+    elif height > top:
+        height = top
+
+    # Keep 'peak' dot at top
+    if height > peak:
+        peak = height
+
+        # Color pixels based on rainbow gradient
+    for i in range(0, len(strip)):
+        if i >= height:
+            strip[i] = [0, 0, 0]
+        else:
+            strip[i] = wheel(remap_range(i, 0, (n_pixels - 1), 30, 150))
+
+    # Save sample for dynamic leveling
+    vol[vol_count] = n
+
+    # Advance/rollover sample counter
+    vol_count += 1
+
+    if vol_count >= samples:
+        vol_count = 0
+
+        # Get volume range of prior frames
+    min_level = vol[0]
+    max_level = vol[0]
+
+    for i in range(1, len(vol)):
+        if vol[i] < min_level:
+            min_level = vol[i]
+        elif vol[i] > max_level:
+            max_level = vol[i]
+
+    # minlvl and maxlvl indicate the volume range over prior frames, used
+    # for vertically scaling the output graph (so it looks interesting
+    # regardless of volume level).  If they're too close together though
+    # (e.g. at very low volume levels) the graph becomes super coarse
+    # and 'jumpy'...so keep some minimum distance between them (this
+    # also lets the graph go to zero when no sound is playing):
+    if (max_level - min_level) < top:
+        max_level = min_level + top
+
+    # Dampen min/max levels - divide by 64 (2^6)
+    min_level_avg = (min_level_avg * 63 + min_level) >> 6
+    # fake rolling average - divide by 64 (2^6)
+    max_level_avg = (max_level_avg * 63 + max_level) >> 6
+
+    print(n)
