@@ -3,36 +3,14 @@ import array
 import board
 import neopixel
 from analogio import AnalogIn
-from adafruit_featherwing import neopixel_featherwing
-
-from adafruit_led_animation.animation.comet import Comet
-from adafruit_led_animation.animation.rainbowcomet import RainbowComet
-from adafruit_led_animation.animation.rainbowchase import RainbowChase
-from adafruit_led_animation.animation.chase import Chase
-from adafruit_led_animation.animation.rainbow import Rainbow
-from adafruit_led_animation.sequence import AnimationSequence
 from adafruit_led_animation import helper
-from adafruit_led_animation.color import PURPLE, JADE, AMBER
 
-# Update to match the pin connected to your NeoPixels
-pixel_pin = board.D6
-# Update to match the number of NeoPixels you have connected
-pixel_num = 32
-
-pixels = neopixel.NeoPixel(pixel_pin, pixel_num, brightness=0.5, auto_write=False)
-
-pixel_wing_vertical = helper.PixelMap.vertical_lines(
-    pixels, 8, 4, helper.horizontal_strip_gridmap(8, alternating=False)
-)
-pixel_wing_horizontal = helper.PixelMap.horizontal_lines(
-    pixels, 8, 4, helper.horizontal_strip_gridmap(8, alternating=False)
-)
-
-
+led_pin = board.D6  # NeoPixel LED strand is connected to GPIO #0 / D0
+n_pixels = 32  # Number of pixels you are using
 dc_offset = 0  # DC offset in mic signal - if unusure, leave 0
 noise = 100  # Noise/hum/interference in mic signal
 samples = 60  # Length of buffer for dynamic level adjustment
-top = pixel_num + 1  # Allow dot to go slightly off scale
+top = n_pixels + 1  # Allow dot to go slightly off scale
 
 peak = 0  # Used for falling dot
 dot_count = 0  # Frame counter for delaying dot-falling speed
@@ -46,6 +24,20 @@ max_level_avg = 512
 vol = array.array("H", [0] * samples)
 
 mic_pin = AnalogIn(board.A2)
+
+# Make auto_write True to match the FeatherWing implementation
+strip = neopixel.NeoPixel(led_pin, n_pixels, brightness=0.1, auto_write=True)
+
+# Add PixelMapping code from Adafruit Featherwing tutorial
+
+# pixels = neopixel.NeoPixel(pixel_pin, pixel_num, brightness=0.5, auto_write=False)
+
+pixel_wing_vertical = helper.PixelMap.vertical_lines(
+    strip, 8, 4, helper.horizontal_strip_gridmap(8, alternating=False)
+)
+pixel_wing_horizontal = helper.PixelMap.horizontal_lines(
+    strip, 8, 4, helper.horizontal_strip_gridmap(8, alternating=False)
+)
 
 
 def wheel(pos):
@@ -99,11 +91,11 @@ while True:
         peak = height
 
         # Color pixels based on rainbow gradient
-    for i in range(0, 32):
+    for i in range(0, len(strip)):
         if i >= height:
-            pixels[i] = [0, 0, 0]
+            strip[i] = [0, 0, 0]
         else:
-            pixels[i] = wheel(remap_range(i, 0, (pixel_num - 1), 30, 150))
+            strip[i] = wheel(remap_range(i, 0, (n_pixels - 1), 30, 150))
 
     # Save sample for dynamic leveling
     vol[vol_count] = n
