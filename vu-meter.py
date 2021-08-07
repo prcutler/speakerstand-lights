@@ -33,9 +33,9 @@ import board
 import neopixel
 from analogio import AnalogIn
 
-n_pixels = 16  # Number of pixels you are using
-mic_pin = AnalogIn(board.A1)  # Microphone is attached to this analog pin
-led_pin = board.D1  # NeoPixel LED strand is connected to this pin
+n_pixels = 32  # Number of pixels you are using
+mic_pin = AnalogIn(board.A2)  # Microphone is attached to this analog pin
+led_pin = board.D6  # NeoPixel LED strand is connected to this pin
 sample_window = 0.1  # Sample window for average level
 peak_hang = 24  # Time of pause before peak dot falls
 peak_fall = 4  # Rate of falling peak dot
