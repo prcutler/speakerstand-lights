@@ -25,14 +25,16 @@
 
 import array
 import math
-import audiobusio
+
 import board
 import neopixel
+
+from analogio import AnalogIn
 
 # Color of the peak pixel.
 PEAK_COLOR = (100, 0, 255)
 # Number of total pixels - 10 build into Circuit Playground
-NUM_PIXELS = 10
+NUM_PIXELS = 32
 
 # Exponential scaling factor.
 # Should probably be in range -10 .. 10 to be reasonable.
@@ -72,24 +74,27 @@ def volume_color(volume):
     return 200, volume * (255 // NUM_PIXELS), 0
 
 
+# Set up rp2040 and Neopixel Featherwing
+fw_led = board.D6
+
+
 # Main program
 
 # Set up NeoPixels and turn them all off.
-pixels = neopixel.NeoPixel(board.NEOPIXEL, NUM_PIXELS, brightness=0.1, auto_write=False)
+pixels = neopixel.NeoPixel(fw_led, NUM_PIXELS, brightness=0.1, auto_write=False)
 pixels.fill(0)
 pixels.show()
 
-mic = audiobusio.PDMIn(
-    board.MICROPHONE_CLOCK, board.MICROPHONE_DATA, sample_rate=16000, bit_depth=16
-)
+mic = AnalogIn(board.A2)
+mic.
 
 # Record an initial sample to calibrate. Assume it's quiet when we start.
 samples = array.array("H", [0] * NUM_SAMPLES)
-mic.record(samples, len(samples))
+# mic.record(samples, len(samples))
 # Set lowest level to expect, plus a little.
-input_floor = normalized_rms(samples) + 10
+# input_floor = normalized_rms(samples) + 10
 # OR: used a fixed floor
-# input_floor = 50
+input_floor = 50
 
 # You might want to print the input_floor to help adjust other values.
 # print(input_floor)
@@ -100,7 +105,8 @@ input_ceiling = input_floor + 500
 
 peak = 0
 while True:
-    mic.record(samples, len(samples))
+    samples = mic.value / 64
+    #    mic.record(samples, len(samples))
     magnitude = normalized_rms(samples)
     # You might want to print this to see the values.
     # print(magnitude)
