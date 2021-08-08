@@ -91,11 +91,11 @@ while True:
         peak = height
 
         # Color pixels based on rainbow gradient
-    for i in range(0, len(pixel_wing_horizontal)):
+    for i in range(0, len(strip)):
         if i >= height:
-            pixel_wing_horizontal[i] = [0, 0, 0]
+            strip[i] = [0, 0, 0]
         else:
-            pixel_wing_horizontal[i] = wheel(remap_range(i, 0, (n_pixels - 1), 30, 150))
+            strip[i] = wheel(remap_range(i, 0, (n_pixels - 1), 30, 150))
 
     # Save sample for dynamic leveling
     vol[vol_count] = n
