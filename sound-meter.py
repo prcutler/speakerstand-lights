@@ -29,11 +29,14 @@ import math
 import board
 import neopixel
 
+# Import needed AnalogIn and PixelFramebuffer
 from analogio import AnalogIn
+from adafruit_pixel_framebuf import PixelFramebuffer
 
 # Color of the peak pixel.
 PEAK_COLOR = (100, 0, 255)
-# Number of total pixels - 10 build into Circuit Playground
+
+# Number of total pixels - 10 built into Circuit Playground - 32 in Featherwing
 NUM_PIXELS = 32
 
 # Exponential scaling factor.
@@ -86,7 +89,6 @@ pixels.fill(0)
 pixels.show()
 
 mic = AnalogIn(board.A2)
-mic.
 
 # Record an initial sample to calibrate. Assume it's quiet when we start.
 samples = array.array("H", [0] * NUM_SAMPLES)

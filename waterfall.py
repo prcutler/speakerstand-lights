@@ -6,81 +6,53 @@ import array
 
 import board
 import audiobusio
-import displayio
+from displayio import Palette
+
+# Remove display io and add neopixel
+# import displayio
+import neopixel
+
 from ulab import numpy as np
 from ulab.scipy.signal import spectrogram
 
 # Add AnalogIn
 from analogio import AnalogIn
 
-display = board.D6
+# Add adafruit_framebuf for Featherwing NeoPixels
+from rainbowio import colorwheel as wheel
+from ulab import numpy as np
+# from adafruit_matrixportal.matrix import Matrix
+
+# Disable displayio methods and use neopixel instead
+# group = displayio.Group()  # Create a Group
+# bitmap = displayio.Bitmap(8, 4, 2)  # Create a bitmap object,width, height, bit depth
+
+COLUMNS = 8
+ROWS = 4
+
+pixels = neopixel.NeoPixel(board.D6, 32, brightness=0.3)
 
 # Create a heatmap color palette
-palette = displayio.Palette(32)
-for i, pi in enumerate(
-    (
-        0xFF0000,
-        0xFF0A00,
-        0xFF1400,
-        0xFF1E00,
-        0xFF2800,
-        0xFF3200,
-        0xFF3C00,
-        0xFF4600,
-        0xFF5000,
-        0xFF5A00,
-        0xFF6400,
-        0xFF6E00,
-        0xFF7800,
-        0xFF8200,
-        0xFF8C00,
-        0xFF9600,
-        0xFFA000,
-        0xFFAA00,
-        0xFFB400,
-        0xFFBE00,
-        0xFFC800,
-        0xFFD200,
-        0xFFDC00,
-        0xFFE600,
-        0xFFF000,
-        0xFFFA00,
-        0xFDFF00,
-        0xD7FF00,
-        0xB0FF00,
-        0x8AFF00,
-        0x65FF00,
-        0x3EFF00,
-        0x17FF00,
-        0x00FF10,
-        0x00FF36,
-        0x00FF5C,
-        0x00FF83,
-        0x00FFA8,
-        0x00FFD0,
-        0x00FFF4,
-        0x00A4FF,
-        0x0094FF,
-        0x0084FF,
-        0x0074FF,
-        0x0064FF,
-        0x0054FF,
-        0x0044FF,
-        0x0032FF,
-        0x0022FF,
-        0x0012FF,
-        0x0002FF,
-        0x0000FF,
-    )
-):
-    palette[32 - i] = pi
+# palette = displayio.Palette(52)
 
+palette = [0xffc800, 0xffd200, 0xffdc00, 0xffe600,
+                        0xfff000, 0xfffa00, 0xfdff00, 0xd7ff00,
+                        0xb0ff00, 0x8aff00, 0x65ff00, 0x3eff00,
+                        0x17ff00, 0x00ff10, 0x00ff36, 0x00ff5c,
+                        0x00ff83, 0x00ffa8, 0x00ffd0, 0x00fff4,
+                        0x00a4ff, 0x0094ff, 0x0084ff, 0x0074ff,
+                        0x0064ff, 0x0054ff, 0x0044ff, 0x0032ff,
+                        0x0022ff, 0x0012ff, 0x0002ff, 0x0000ff]
 
-class RollingGraph(displayio.TileGrid):
+for i, pi in enumerate(palette):
+    palette[31 - i] = pi
+
+# I think this creates the first 3 columns of the graph and then moves it right
+class RollingGraph(pixels):
     def __init__(self, scale=2):
         # Create a bitmap with heatmap colors
-        self.bitmap = displayio.Bitmap(
-            display.width // scale, display.height // scale, len(palette)
+        self.bitmap = pixels.Bitmap(
+            pixels.width // scale, pixels.height // scale, len(palette)
         )
         super().__init__(self.bitmap, pixel_shader=palette)
 
@@ -100,7 +72,7 @@ class RollingGraph(displayio.TileGrid):
         self.scroll_offset = (y + 1) % self.bitmap.height
 
 
-group = displayio.Group(scale=3)
+group = pixels.group(scale=3)
 graph = RollingGraph(3)
 fft_size = 256
 
@@ -108,7 +80,7 @@ fft_size = 256
 group.append(graph)
 
 # Add the Group to the Display
-display.show(group)
+pixels.show(group)
 
 # instantiate board mic
 # mic = audiobusio.PDMIn(
@@ -126,8 +98,29 @@ def main():
     max_all = 10
 
     while True:
-        mic.record(samples_bit, len(samples_bit))
-        samples = np.array(samples_bit[3:])
+        # Comment out the PDM mic
+        # mic.record(samples_bit, len(samples_bit))
+
+        # Use analog mic instead - Start pendant code insert:
+        n = int((mic.value / 65536) * 1000)  # 10-bit ADC format
+        n = abs(n - 512)  # Center on zero
+
+        if n >= noise:  # Remove noise/hum
+            n = n - noise
+
+        # "Dampened" reading (else looks twitchy) - divide by 8 (2^3)
+        lvl = int(((lvl * 7) + n) / 8)
+
+        # End pendant code
+
+        # Slicing from the 3: eliminates line 122?
+
+        # Original samples:
+        # samples = np.array(samples_bit[3:])
+
+        # Modified samples - use lvl, which should be incoming mic level
+        samples = np.array(lvl)
+
         spectrogram1 = spectrogram(samples)
         # spectrum() is always nonnegative, but add a tiny value
         # to change any zeros to nonzero numbers
@@ -147,7 +140,7 @@ def main():
         data = (spectrogram1 - min_curr) * (51.0 / (max_all - min_curr))
         # This clamps any negative numbers to zero
         data = data * np.array((data > 0))
-        graph.show(data)
+        pixels.show(data)
 
 
 main()

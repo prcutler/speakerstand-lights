@@ -90,7 +90,7 @@ while True:
     if height > peak:
         peak = height
 
-        # Color pixels based on rainbow gradient
+     # Color pixels based on rainbow gradient
     for i in range(0, len(strip)):
         if i >= height:
             strip[i] = [0, 0, 0]

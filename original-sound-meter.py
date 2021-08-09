@@ -32,7 +32,7 @@ import neopixel
 # Color of the peak pixel.
 PEAK_COLOR = (100, 0, 255)
 # Number of total pixels - 10 build into Circuit Playground
-NUM_PIXELS = 32
+NUM_PIXELS = 10
 
 # Exponential scaling factor.
 # Should probably be in range -10 .. 10 to be reasonable.
@@ -50,16 +50,20 @@ def constrain(value, floor, ceiling):
 
 # Scale input_value between output_min and output_max, exponentially.
 def log_scale(input_value, input_min, input_max, output_min, output_max):
-    normalized_input_value = (input_value - input_min) / (input_max - input_min)
-    return output_min + math.pow(normalized_input_value, SCALE_EXPONENT) * (
-        output_max - output_min
-    )
+    normalized_input_value = (input_value - input_min) / \
+                             (input_max - input_min)
+    return output_min + \
+        math.pow(normalized_input_value, SCALE_EXPONENT) \
+        * (output_max - output_min)
 
 
 # Remove DC bias before computing RMS.
 def normalized_rms(values):
     minbuf = int(mean(values))
-    samples_sum = sum(float(sample - minbuf) * (sample - minbuf) for sample in values)
+    samples_sum = sum(
+        float(sample - minbuf) * (sample - minbuf)
+        for sample in values
+    )
 
     return math.sqrt(samples_sum / len(values))
 
@@ -79,12 +83,11 @@ pixels = neopixel.NeoPixel(board.NEOPIXEL, NUM_PIXELS, brightness=0.1, auto_writ
 pixels.fill(0)
 pixels.show()
 
-mic = audiobusio.PDMIn(
-    board.MICROPHONE_CLOCK, board.MICROPHONE_DATA, sample_rate=16000, bit_depth=16
-)
+mic = audiobusio.PDMIn(board.MICROPHONE_CLOCK, board.MICROPHONE_DATA,
+                       sample_rate=16000, bit_depth=16)
 
 # Record an initial sample to calibrate. Assume it's quiet when we start.
-samples = array.array("H", [0] * NUM_SAMPLES)
+samples = array.array('H', [0] * NUM_SAMPLES)
 mic.record(samples, len(samples))
 # Set lowest level to expect, plus a little.
 input_floor = normalized_rms(samples) + 10
@@ -106,13 +109,8 @@ while True:
     # print(magnitude)
 
     # Compute scaled logarithmic reading in the range 0 to NUM_PIXELS
-    c = log_scale(
-        constrain(magnitude, input_floor, input_ceiling),
-        input_floor,
-        input_ceiling,
-        0,
-        NUM_PIXELS,
-    )
+    c = log_scale(constrain(magnitude, input_floor, input_ceiling),
+                  input_floor, input_ceiling, 0, NUM_PIXELS)
 
     # Light up pixels that are below the scaled and interpolated magnitude.
     pixels.fill(0)

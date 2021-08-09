@@ -36,6 +36,9 @@ from analogio import AnalogIn
 # Import from featherwing example
 from adafruit_led_animation import helper
 
+# Import PixelFramebuffer
+from adafruit_pixel_framebuf import PixelFramebuffer
+
 n_pixels = 32  # Number of pixels you are using
 mic_pin = AnalogIn(board.A2)  # Microphone is attached to this analog pin
 led_pin = board.D6  # NeoPixel LED strand is connected to this pin
@@ -53,7 +56,7 @@ sample = 0
 dotcount = 0  # Frame counter for peak dot
 dothangcount = 0  # Frame counter for holding peak dot
 
-strip = neopixel.NeoPixel(led_pin, n_pixels, brightness=1, auto_write=False)
+strip = neopixel.NeoPixel(led_pin, n_pixels, brightness=0.1, auto_write=False)
 
 # Add Neopixel Featherwing vertical and horizontal functions
 
@@ -151,7 +154,7 @@ def drawLine(fromhere, to):
         to = fromheretemp
 
     for index in range(fromhere, to):
-        pixel_wing_horizontal[index] = (0, 0, 0)
+        strip[index] = (0, 0, 0)
 
 
 while True:
@@ -179,9 +182,9 @@ while True:
     peaktopeak = signalmax - signalmin  # max - min = peak-peak amplitude
 
     # Fill the strip with rainbow gradient
-    for i in range(0, len(pixel_wing_horizontal)):
-        pixel_wing_horizontal[i] = wheel(remapRange(i, 0, (n_pixels - 1), 30, 150))
-        print(pixel_wing_horizontal[i])
+    for i in range(0, len(strip)):
+        strip[i] = wheel(remapRange(i, 0, (n_pixels - 1), 30, 150))
+        print(strip[i])
 
     # Scale the input logarithmically instead of linearly
     c = fscale(input_floor, input_ceiling, (n_pixels - 1), 0, peaktopeak, 2)
@@ -195,11 +198,11 @@ while True:
 
     # Set the peak dot to match the rainbow gradient
     y = n_pixels - peak
-    pixel_wing_horizontal.fill = (
+    strip.fill = (
         y - 1,
         wheel(remapRange(y, 0, (n_pixels - 1), 30, 150)),
     )
-    pixel_wing_horizontal.write()
+    strip.write()
 
     # Frame based peak dot animation
     if dothangcount > peak_hang:  # Peak pause length

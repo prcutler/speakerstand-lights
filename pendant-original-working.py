@@ -4,8 +4,6 @@ import board
 import neopixel
 from analogio import AnalogIn
 
-# This seems harder to get to max volume than vu-meter
-
 led_pin = board.D6  # NeoPixel LED strand is connected to GPIO #0 / D0
 n_pixels = 32  # Number of pixels you are using
 dc_offset = 0  # DC offset in mic signal - if unusure, leave 0
