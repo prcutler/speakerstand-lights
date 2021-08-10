@@ -27,6 +27,10 @@
 # Modified fromhere code by Greg Shakar
 # Ported to Circuit Python by Mikey Sklar
 
+# 20120810 - This runs, but LEDS don't light up.  The variable c below
+# now prints a range of 1 - 4 based on mic detection and the column 
+# height.  TODO: Figure out how to light the LEDs and then iterate by column
+
 import time
 
 import board
