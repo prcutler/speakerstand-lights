@@ -55,45 +55,43 @@ pixels = neopixel.NeoPixel(NEOPIXEL_PIN, NUM_PIXELS, brightness=1, auto_write=Fa
 pixels.fill(0)  # NeoPixels off ASAP on startup
 pixels.show()
 
-pixelmap_fw = PixelMap(pixels, [
-    0, 1, 2, 3, 4, 5, 6, 7,
-    8, 9, 10, 11, 12, 13, 14, 15, 
-    16, 17, 18, 19, 20, 21, 22, 23,
-    24, 25, 26, 27, 28, 29, 30, 31], individual_pixels=True)
+pixel_map_sweep = PixelMap(pixels, [
+    51, 52, 50, 53, 49, 54, 48, 55, 47, 56, 46, 57, 45, 58, 44, 59, 43, 60, 42, 61,
+    41, 62, 40, 63, 39, 64, 38, 65, 37, 66, 36, 67, 35, 68, 34, 69, 33, 70, 32, 71,
+    31, 72, 30, 73, 29, 74, 28, 75, 27, 76, 27, 77, 26, 78, 25, 79, 24, 80, 23, 81,
+    22, 82, 21, 83, 20, 84, 19, 85, 18, 86, 17, 87, 16, 88, 15, 89, 14, 90, 13, 91,
+    12, 92, 11, 93, 10, 94, 9, 95, 8, 96, 7, 97, 6, 98, 5, 99, 4, 100, 3, 101, 2, 102, 1, 103, 0
+    ], individual_pixels=True)
 
-pixel_map = pixelmap_fw
-
-mic = AnalogIn(board.A2)  # set mic input
-NUM_SAMPLES = 256
-samples_bit = array.array('H', [0] * (NUM_SAMPLES+3))
+pixelmap_fw = pixel_map_sweep
 
 # Cusomize LED Animations  ------------------------------------------------------
-powerup = RainbowComet(pixel_map, speed=0, tail_length=25, bounce=False)
-rainbow = Rainbow(pixel_map, speed=0, period=6, name="rainbow", step=2.4)
-rainbow_chase = RainbowChase(pixel_map, speed=0, size=3, spacing=15, step=10)
-rainbow_chase2 = RainbowChase(pixel_map, speed=0, size=10, spacing=1, step=18)
-chase = Chase(pixel_map, speed=0.1, color=RED, size=1, spacing=6)
-rainbow_comet = RainbowComet(pixel_map, speed=0, tail_length=80, bounce=True)
+powerup = RainbowComet(pixelmap_fw, speed=0, tail_length=25, bounce=False)
+rainbow = Rainbow(pixelmap_fw, speed=0, period=6, name="rainbow", step=2.4)
+rainbow_chase = RainbowChase(pixelmap_fw, speed=0, size=3, spacing=15, step=10)
+rainbow_chase2 = RainbowChase(pixelmap_fw, speed=0, size=10, spacing=1, step=18)
+chase = Chase(pixelmap_fw, speed=0.1, color=RED, size=1, spacing=6)
+rainbow_comet = RainbowComet(pixelmap_fw, speed=0, tail_length=80, bounce=True)
 rainbow_comet2 = RainbowComet(
-    pixel_map, speed=0, tail_length=104, colorwheel_offset=80, bounce=True
+    pixelmap_fw, speed=0, tail_length=104, colorwheel_offset=80, bounce=True
     )
 rainbow_comet3 = RainbowComet(
-    pixel_map, speed=0, tail_length=25, colorwheel_offset=80, step=4, bounce=False
+    pixelmap_fw, speed=0, tail_length=25, colorwheel_offset=80, step=4, bounce=False
     )
 strum = RainbowComet(
-    pixel_map, speed=0, tail_length=25, bounce=False, colorwheel_offset=50, step=4
+    pixelmap_fw, speed=0, tail_length=25, bounce=False, colorwheel_offset=50, step=4
     )
-lava = Comet(pixel_map, speed=0.01, color=ORANGE, tail_length=40, bounce=False)
-sparkle = Sparkle(pixel_map, speed=0.01, color=BLUE, num_sparkles=10)
-sparkle2 = Sparkle(pixel_map, speed=0.05, color=PURPLE, num_sparkles=4)
+lava = Comet(pixelmap_fw, speed=0.01, color=ORANGE, tail_length=40, bounce=False)
+sparkle = Sparkle(pixelmap_fw, speed=0.01, color=BLUE, num_sparkles=10)
+sparkle2 = Sparkle(pixelmap_fw, speed=0.05, color=PURPLE, num_sparkles=4)
 
 # Animations Playlist - reorder as desired. AnimationGroups play at the same time
 animations = AnimationSequence(
-    rainbow,
-    rainbow_chase,
-    rainbow_chase2,
-    chase,
-    lava,
+    # rainbow,
+    # rainbow_chase,
+    # rainbow_chase2,
+    # chase,
+    # lava,
     rainbow_comet,
     rainbow_comet2,
     AnimationGroup(
@@ -108,14 +106,37 @@ animations = AnimationSequence(
     auto_reset=True,
 )
 
+mic = AnalogIn(board.A2)  # set mic input
+NUM_SAMPLES = 256
+samples_bit = array.array('H', [0] * (NUM_SAMPLES+3))
+duration = 0.11
+
 # Main loop
 while True:
     # Insert Analog mic code below commented out code
     # mic.record(samples_bit, len(samples_bit))
-    samples = mic.value
+    open_mic = mic.value
+    # print("Mic value: ", open_mic) # Confirmed working 20120809 7:25pm
     # (The mic is live, but no display)
+    #samples_bit 16 bit?
+
+    # class audiobusio.PDMIn(clock_pin: microcontroller.Pin, 
+    # data_pin: microcontroller.Pin, *, 
+    # sample_rate: int = 16000, 
+    # bit_depth: int = 8, mono: bool = True, 
+    # oversample: int = 64, 
+    # startup_delay: float = 0.11)
+
+    # mic = audiobusio.PDMIn(board.MICROPHONE_CLOCK,
+    #                  board.MICROPHONE_DATA,
+    #                  sample_rate=16000,
+    #                   bit_depth=16)
+
+# Insert power_on method from original
+    # start_time = time.monotonic()  # Save start time
 
     samples = np.array(samples_bit[3:])
+    print("Samples_bit = ",samples_bit, "Samples = ", samples)
     spectrum = spectrogram(samples)
     spectrum = spectrum[:128]
     spectrum[0] = 0

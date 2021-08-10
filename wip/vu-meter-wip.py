@@ -50,10 +50,6 @@ input_floor = 10  # Lower range of analogRead input
 # (1023 = max)
 input_ceiling = 300
 
-# Add Width and Height of Neopixel Feather
-pixel_width = 8
-pixel_height = 4
-
 peak = 16  # Peak level of column; used for falling dots
 sample = 0
 
@@ -63,17 +59,13 @@ dothangcount = 0  # Frame counter for holding peak dot
 strip = neopixel.NeoPixel(led_pin, n_pixels, brightness=0.1, auto_write=False)
 
 # Add Neopixel Featherwing vertical and horizontal functions
-
+# This changes all the lines
 pixel_wing_vertical = helper.PixelMap.vertical_lines(
     strip, 8, 4, helper.horizontal_strip_gridmap(8, alternating=False)
 )
 pixel_wing_horizontal = helper.PixelMap.horizontal_lines(
     strip, 8, 4, helper.horizontal_strip_gridmap(8, alternating=False)
 )
-
-# Add Pixel Framebuffer
-fb = PixelFramebuffer(
-    n_pixels, pixel_width, pixel_height, alternating=False)
 
 
 def wheel(pos):
@@ -161,8 +153,9 @@ def drawLine(fromhere, to):
         fromhere = to
         to = fromheretemp
 
+    # this removes all light / color from pixels not in use
     for index in range(fromhere, to):
-        fb.fill = (0, 0, 0)
+        strip[index] = (0, 0, 0)
 
 
 while True:
@@ -190,28 +183,27 @@ while True:
     peaktopeak = signalmax - signalmin  # max - min = peak-peak amplitude
 
     # Fill the strip with rainbow gradient
-    for i in range(0, pixel_height):
-        i = wheel(remapRange(i, 0, (pixel_height - 1), 30, 150))
-        print(i)
+    for i in range(0, len(strip)):
+        strip[i] = wheel(remapRange(i, 0, (n_pixels - 1), 30, 150))
+        print(strip[i])
 
     # Scale the input logarithmically instead of linearly
-    c = fscale(input_floor, input_ceiling, (pixel_height - 1), 0, peaktopeak, 2)
+    c = fscale(input_floor, input_ceiling, (n_pixels - 1), 0, peaktopeak, 2)
 
     if c < peak:
         peak = c  # keep dot on top
         dothangcount = 0  # make the dot hang before falling
 
-    if c <= pixel_height:  # fill partial column with off pixels
-        drawLine(pixel_height, pixel_height - int(c))
+    if c <= n_pixels:  # fill partial column with off pixels
+        drawLine(n_pixels, n_pixels - int(c))
 
     # Set the peak dot to match the rainbow gradient
-    y = pixel_height - peak
-    fb.fill = (
+    y = n_pixels - peak
+    strip.fill = (
         y - 1,
-        wheel(remapRange(y, 0, (pixel_height - 1), 30, 150)),
+        wheel(remapRange(y, 0, (n_pixels - 1), 30, 150)),
     )
-    #strip.write()
-    fb.display()
+    strip.write()
 
     # Frame based peak dot animation
     if dothangcount > peak_hang:  # Peak pause length
@@ -221,4 +213,4 @@ while True:
             dotcount = 0
     else:
         dothangcount += 1
-    print("C is : ",c)
+    print(c)
