@@ -54,6 +54,7 @@ input_floor = 10  # Lower range of analogRead input
 # (1023 = max)
 input_ceiling = 300
 
+# Original value peak = 16 and sample = 0
 peak = 16  # Peak level of column; used for falling dots
 sample = 0
 
