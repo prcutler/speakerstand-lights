@@ -50,17 +50,19 @@ input_floor = 10  # Lower range of analogRead input
 # (1023 = max)
 input_ceiling = 300
 
+# Original values are peak = 16 and sample = 0
 peak = 16  # Peak level of column; used for falling dots
 sample = 0
 
 dotcount = 0  # Frame counter for peak dot
 dothangcount = 0  # Frame counter for holding peak dot
 
+# Disable original Neopixel code where all 32 LEDs are one long wraparound strip
 # strip = neopixel.NeoPixel(led_pin, n_pixels, brightness=0.1, auto_write=False)
 # print(strip, type(strip))
 
 # Create a framebuffer for the NeoPixels
-# pixel_pin = board.D6
+# pixel_pin = board.D6 - already assigned above as led_pin
 pixel_width = 8
 pixel_height = 4
 
@@ -217,12 +219,12 @@ while True:
         peak = c  # keep dot on top
         dothangcount = 0  # make the dot hang before falling
 
-    if c <= n_pixels:  # fill partial column with off pixels
+    if c <= pixel_height:  # fill partial column with off pixels
         drawLine(pixel_height, pixel_height - int(c))
 
     # Set the peak dot to match the rainbow gradient
     y = pixel_height - peak
-    pixels.fill = (
+    pixels.vline = (
         y - 1,
         wheel(remapRange(y, 0, (pixel_height - 1), 30, 150)),
     )

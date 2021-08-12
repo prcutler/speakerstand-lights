@@ -181,7 +181,7 @@ while True:
 
     peaktopeak = signalmax - signalmin  # max - min = peak-peak amplitude
 
-    # Fill the strip with rainbow gradient
+    # Fill the strip with rainbow gradient - len of strip = 31
     for i in range(0, len(strip)):
         strip[i] = wheel(remapRange(i, 0, (n_pixels - 1), 30, 150))
         print(strip[i])

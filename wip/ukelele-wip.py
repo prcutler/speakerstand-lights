@@ -48,6 +48,10 @@ VOLUME_CALIBRATOR = 50 #multiplier for brightness mapping
 ROCKSTAR_TILT_THRESHOLD = 200 #shake threshold
 SOUND_THRESHOLD = 430000 #main strum or pluck threshold
 
+# Set to the length in seconds for the animations
+POWER_ON_DURATION = 1.3
+ROCKSTAR_TILT_DURATION = 1
+
 NUM_PIXELS = 32  # Number of pixels used in project
 NEOPIXEL_PIN = board.D6
 
@@ -56,11 +60,10 @@ pixels.fill(0)  # NeoPixels off ASAP on startup
 pixels.show()
 
 pixel_map_sweep = PixelMap(pixels, [
-    51, 52, 50, 53, 49, 54, 48, 55, 47, 56, 46, 57, 45, 58, 44, 59, 43, 60, 42, 61,
-    41, 62, 40, 63, 39, 64, 38, 65, 37, 66, 36, 67, 35, 68, 34, 69, 33, 70, 32, 71,
-    31, 72, 30, 73, 29, 74, 28, 75, 27, 76, 27, 77, 26, 78, 25, 79, 24, 80, 23, 81,
-    22, 82, 21, 83, 20, 84, 19, 85, 18, 86, 17, 87, 16, 88, 15, 89, 14, 90, 13, 91,
-    12, 92, 11, 93, 10, 94, 9, 95, 8, 96, 7, 97, 6, 98, 5, 99, 4, 100, 3, 101, 2, 102, 1, 103, 0
+    0, 1, 2, 3, 4, 5, 6, 7,
+    8, 9, 10, 11, 12, 13, 14, 15,
+    16, 17, 18, 19, 20, 21, 22, 23,
+    24, 25, 26, 27, 28, 29, 30, 31,
     ], individual_pixels=True)
 
 pixelmap_fw = pixel_map_sweep
@@ -109,13 +112,14 @@ animations = AnimationSequence(
 mic = AnalogIn(board.A2)  # set mic input
 NUM_SAMPLES = 256
 samples_bit = array.array('H', [0] * (NUM_SAMPLES+3))
-duration = 0.11
+duration = float(0.11)
 
 # Main loop
 while True:
     # Insert Analog mic code below commented out code
     # mic.record(samples_bit, len(samples_bit))
-    open_mic = mic.value
+    # mic.record(sample_rate = sample_bit, bit_depth = len(samples_bit))
+    open_mic = (mic.value, 16)
     # print("Mic value: ", open_mic) # Confirmed working 20120809 7:25pm
     # (The mic is live, but no display)
     #samples_bit 16 bit?
@@ -133,7 +137,7 @@ while True:
     #                   bit_depth=16)
 
 # Insert power_on method from original
-    # start_time = time.monotonic()  # Save start time
+    start_time = time.monotonic()  # Save start time
 
     samples = np.array(samples_bit[3:])
     print("Samples_bit = ",samples_bit, "Samples = ", samples)
@@ -150,16 +154,12 @@ while True:
         animations.next()
         time.sleep(1)
     if peak_freq == 875 and magnitude > SOUND_THRESHOLD:
-        if MODE == 1:
-            MODE = 2
-            print("mode = 2")
-            LASTMODE = 2
-            time.sleep(1)
-        elif MODE == 2:
-            MODE = 1
-            print("mode = 1")
-            LASTMODE = 1
-            time.sleep(1)
+            VOLUME = magnitude / (VOLUME_CALIBRATOR * 100000)
+            if VOLUME > MAX_BRIGHTNESS:
+                VOLUME = MAX_BRIGHTNESS
+            # Next line probably needs to be changed to framebuf?   
+            pixels.brightness = VOLUME
+            animations.animate()
 
 
 
