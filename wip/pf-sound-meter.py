@@ -22,8 +22,6 @@
 # THE SOFTWARE.
 
 # Circuit Playground Sound Meter
-# Ported to 2040 Feather and NeoPixel Featherwing by Paul Cutler
-# 08AUG2021 Code seems to runm and all pixels are lit, but sound reactive
 
 import array
 import math
@@ -33,13 +31,71 @@ import neopixel
 
 # Import needed AnalogIn and PixelFramebuffer
 from analogio import AnalogIn
-from adafruit_pixel_framebuf import PixelFramebuffer
+
+from adafruit_led_animation.helper import PixelMap
+from adafruit_led_animation.sequence import AnimationSequence
+from adafruit_led_animation.group import AnimationGroup
+from adafruit_led_animation.animation.sparkle import Sparkle
+from adafruit_led_animation.animation.rainbow import Rainbow
+from adafruit_led_animation.animation.rainbowchase import RainbowChase
+from adafruit_led_animation.animation.rainbowcomet import RainbowComet
+from adafruit_led_animation.animation.chase import Chase
+from adafruit_led_animation.animation.comet import Comet
+from adafruit_led_animation.color import colorwheel
+from adafruit_led_animation.color import (
+    BLACK,
+    RED,
+    ORANGE,
+    BLUE,
+    PURPLE,
+    WHITE,
+)
 
 # Color of the peak pixel.
 PEAK_COLOR = (100, 0, 255)
 
 # Number of total pixels - 10 built into Circuit Playground - 32 in Featherwing
 NUM_PIXELS = 32
+
+# Set up rp2040 and Neopixel Featherwing
+fw_led = board.D6
+
+# Set up NeoPixels and turn them all off.
+pixels = neopixel.NeoPixel(fw_led, NUM_PIXELS, brightness=0.1, auto_write=False)
+pixels.fill(0)
+pixels.show()
+
+
+# Was pixel_map_around (I think that's the sound reactive one) in ukulele
+pixel_map_around = PixelMap(pixels, [
+    0, 1, 2, 3, 4, 5, 6, 7,
+    8, 9, 10, 11, 12, 13, 14, 15,
+    16, 17, 18, 19, 20, 21, 22, 23,
+    24, 25, 26, 27, 28, 29, 30, 31,
+    ], individual_pixels=True)
+
+# Was Bottom up along both sides at once
+pixel_map_reverse = PixelMap(pixels, [
+    31, 30, 29, 28, 27, 26, 25, 24,
+    23, 22, 21, 20, 19, 18, 17, 16,
+    15, 14, 13, 12, 11, 10, 9, 8,
+    7, 6, 5, 4, 3, 2, 1, 0,
+    ], individual_pixels=True)
+
+#Was Every other pixel, starting at the bottom and going upwards along both sides
+pixel_map_skip = PixelMap(pixels, [
+    0, 2, 4, 6, 
+    8, 10, 12, 14,
+    16, 18, 20, 22,
+    24, 26, 28, 30,
+    ], individual_pixels=True)
+
+pixel_map = [pixel_map_around, pixel_map_reverse, pixel_map_skip]
+
+# Can we use this to iterate pixels going across horizontally?
+column_list = [
+    0, 1, 2, 3, 4, 5, 6, 7
+]
 
 # Exponential scaling factor.
 # Should probably be in range -10 .. 10 to be reasonable.
@@ -78,18 +134,9 @@ def mean(values):
 def volume_color(volume):
     return 200, volume * (255 // NUM_PIXELS), 0
 
-
-# Set up rp2040 and Neopixel Featherwing
-fw_led = board.D6
-
-
 # Main program
 
-# Set up NeoPixels and turn them all off.
-pixels = neopixel.NeoPixel(fw_led, NUM_PIXELS, brightness=0.1, auto_write=False)
-pixels.fill(0)
-pixels.show()
-
+# Set up the mic
 mic = AnalogIn(board.A2)
 
 # Record an initial sample to calibrate. Assume it's quiet when we start.
@@ -109,8 +156,9 @@ input_ceiling = input_floor + 500
 
 peak = 0
 while True:
-    recordings = mic.value / 64
-    
+    samples = mic.value / 64
+    # This is where it breaks - need to pass samples to the array for the sample
+    # not just get a value
     #    mic.record(samples, len(samples))
     magnitude = normalized_rms(samples)
     # You might want to print this to see the values.
@@ -119,7 +167,6 @@ while True:
     # Compute scaled logarithmic reading in the range 0 to NUM_PIXELS
     c = log_scale(
         constrain(magnitude, input_floor, input_ceiling),
-        constrain(mic.value, input_floor, input_ceiling),
         input_floor,
         input_ceiling,
         0,
