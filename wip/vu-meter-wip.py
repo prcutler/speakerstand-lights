@@ -27,6 +27,9 @@
 # Modified fromhere code by Greg Shakar
 # Ported to Circuit Python by Mikey Sklar
 
+# Code runs but no lights
+# TODO: Try vertical lines of 4 pixes
+
 import time
 
 import board
@@ -38,8 +41,9 @@ from adafruit_led_animation import helper
 
 # Import PixelFramebuffer
 from adafruit_pixel_framebuf import PixelFramebuffer
+from adafruit_led_animation.helper import PixelMap
 
-n_pixels = 32  # Number of pixels you are using
+# n_pixels = 32  # Number of pixels you are using
 mic_pin = AnalogIn(board.A2)  # Microphone is attached to this analog pin
 led_pin = board.D6  # NeoPixel LED strand is connected to this pin
 sample_window = 0.1  # Sample window for average level
@@ -50,19 +54,16 @@ input_floor = 10  # Lower range of analogRead input
 # (1023 = max)
 input_ceiling = 300
 
-# Original values are peak = 16 and sample = 0
-peak = 16  # Peak level of column; used for falling dots
+peak = 4  # Peak level of column; used for falling dots
 sample = 0
 
 dotcount = 0  # Frame counter for peak dot
 dothangcount = 0  # Frame counter for holding peak dot
 
-# Disable original Neopixel code where all 32 LEDs are one long wraparound strip
 # strip = neopixel.NeoPixel(led_pin, n_pixels, brightness=0.1, auto_write=False)
-# print(strip, type(strip))
 
-# Create a framebuffer for the NeoPixels
-# pixel_pin = board.D6 - already assigned above as led_pin
+# Add Neopixel Featherwing vertical and horizontal functions
+
 pixel_width = 8
 pixel_height = 4
 
@@ -79,15 +80,38 @@ pixel_framebuf = PixelFramebuffer(
     pixel_height,
     alternating=False,
 )
-print(pixel_framebuf, type(pixel_framebuf))
-# Add Neopixel Featherwing vertical and horizontal functions
-# This changes all the lines
-#pixel_wing_vertical = helper.PixelMap.vertical_lines(
-#    strip, 8, 4, helper.horizontal_strip_gridmap(8, alternating=False)
-#)
-#pixel_wing_horizontal = helper.PixelMap.horizontal_lines(
-#    strip, 8, 4, helper.horizontal_strip_gridmap(8, alternating=False)
-#)
+
+# Was pixel_map_around (I think that's the sound reactive one) in ukulele
+pixel_map_around = PixelMap(pixels.n,[
+    0, 1, 2, 3, 4, 5, 6, 7,
+    8, 9, 10, 11, 12, 13, 14, 15,
+    16, 17, 18, 19, 20, 21, 22, 23,
+    24, 25, 26, 27, 28, 29, 30, 31,
+    ], individual_pixels=True)
+
+# Was Bottom up along both sides at once
+pixel_map_reverse = PixelMap(pixels.n,[
+    31, 30, 29, 28, 27, 26, 25, 24,
+    23, 22, 21, 20, 19, 18, 17, 16,
+    15, 14, 13, 12, 11, 10, 9, 8,
+    7, 6, 5, 4, 3, 2, 1, 0,
+    ], individual_pixels=True)
+
+#Was Every other pixel, starting at the bottom and going upwards along both sides
+pixel_map_skip = PixelMap(pixels.n,[
+    0, 2, 4, 6, 
+    8, 10, 12, 14,
+    16, 18, 20, 22,
+    24, 26, 28, 30,
+    ], individual_pixels=True)
+
+pixel_map = [pixel_map_around, pixel_map_reverse, pixel_map_skip]
+
+# Can we use this to iterate pixels going across horizontally?
+pm_col_list = [
+    0, 1, 2, 3, 4, 5, 6, 7
+]
+
 
 
 def wheel(pos):
@@ -168,17 +192,16 @@ def fscale(originalmin, originalmax, newbegin, newend, inputvalue, curve):
 
     return rangedvalue
 
-
+# Comment out drawLine and replace with pixel_framebuf.line
 def drawLine(fromhere, to):
     if fromhere > to:
         fromheretemp = fromhere
         fromhere = to
         to = fromheretemp
 
-    # this removes all light / color from pixels not in use
     for index in range(fromhere, to):
-        pixels[index] = (0, 0, 0)
-
+        pm_col_list[index](0, 0, pixel_width - 1, pixel_height - 1, 0x000000)
+        pixel_framebuf.display
 
 while True:
 
@@ -205,31 +228,39 @@ while True:
     peaktopeak = signalmax - signalmin  # max - min = peak-peak amplitude
 
     # Fill the strip with rainbow gradient
-    for i in range(0, pixel_height):
-        # pixel_height = wheel(remapRange(i, 0, (pixel_height - 1), 30, 150))
-        # This needs to iterate over four pixels from bottom to top
-        pixel_framebuf.vline(0,4, 4, wheel(remapRange(i, 0, (pixel_height - 1), 30, 150)))
-
-        print(pixel_height)
+    # Change to use the pixel_map columns
+    for i in range(0, pixel_width):
+        pm_col_list[i] = wheel(remapRange(i, 0, (pixel_height - 1), 30, 150))
+        pixel_framebuf.display()
+        # print(strip[i])
 
     # Scale the input logarithmically instead of linearly
+    # Replace n_pixels with pixel_height through end of file
     c = fscale(input_floor, input_ceiling, (pixel_height - 1), 0, peaktopeak, 2)
 
     if c < peak:
         peak = c  # keep dot on top
         dothangcount = 0  # make the dot hang before falling
 
+       # pixel_framebuf.line takes 6 positional arguments 
+       # adafruit_pixel_framebuf.PixelFramebuffer(pixels, width, height, 
+       # orientation=1, alternating=True, reverse_x=False, 
+       # reverse_y=False, top=0, bottom=0, rotation=0)
+        
+        # pixel_framebuf.line(0, 0, pixel_width - 1, pixel_height - 1, 0x00FF00)
+
     if c <= pixel_height:  # fill partial column with off pixels
-        drawLine(pixel_height, pixel_height - int(c))
+        # Need to pass 6 positional arguments (the correct ones)
+        pixel_framebuf.line()
+        pixel_framebuf.display()
 
     # Set the peak dot to match the rainbow gradient
-    y = pixel_height - peak
-    pixels.vline = (
-        y - 1,
-        wheel(remapRange(y, 0, (pixel_height - 1), 30, 150)),
-    )
-    #strip.write()
-    pixel_framebuf.display()
+    #y = pixel_height - peak
+    #pixel_framebuf.fill(
+    #    y - 1,
+    #    wheel(remapRange(y, 0, (pixel_height - 1), 30, 150)),
+    #)
+    #pixel_framebuf.display()
 
     # Frame based peak dot animation
     if dothangcount > peak_hang:  # Peak pause length
@@ -240,4 +271,3 @@ while True:
     else:
         dothangcount += 1
     print(c)
-
