@@ -1,6 +1,9 @@
 """
 AUDIO SPECTRUM LIGHT SHOW for Adafruit EyeLights (LED Glasses + Driver).
 Uses onboard microphone and a lot of math to react to music.
+
+From https://github.com/adafruit/Adafruit_Learning_System_Guides/blob/main/EyeLights_Audio_Spectrum/code.py 
+licensed under the MIT License.
 """
 
 from array import array
