@@ -9,31 +9,121 @@ import array
 import board
 import neopixel
 from analogio import AnalogIn
-import busio
 from ulab import numpy as np
 from ulab.scipy.signal import spectrogram
 
+# Import PixelFramebuffer
+from adafruit_pixel_framebuf import PixelFramebuffer
+from adafruit_led_animation.helper import PixelMap
+# Import from featherwing example
+from adafruit_led_animation import helper
 
-# This seems harder to get to max volume than vu-meter
 
+# Set NeoPixel
 led_pin = board.D6  # NeoPixel LED strand is connected to GPIO #0 / D0
 n_pixels = 32  # Number of pixels you are using
-dc_offset = 0  # DC offset in mic signal - if unusure, leave 0
-noise = 100  # Noise/hum/interference in mic signal
-samples = 60  # Length of buffer for dynamic level adjustment
 top = n_pixels + 1  # Allow dot to go slightly off scale
 
-peak = 0  # Used for falling dot
-dot_count = 0  # Frame counter for delaying dot-falling speed
-vol_count = 0  # Frame counter for storing past volume data
+# Add Neopixel Featherwing vertical and horizontal functions
 
-lvl = 10  # Current "dampened" audio level
-min_level_avg = 0  # For dynamic adjustment of graph low & high
-max_level_avg = 512
+pixel_width = 8
+pixel_height = 4
 
-# Collection of prior volume samples
-vol = array.array("H", [0] * samples)
+pixels = neopixel.NeoPixel(
+    led_pin,
+    pixel_width * pixel_height,
+    brightness=0.1,
+    auto_write=False,
+)
 
-mic_pin = AnalogIn(board.A2)
+pixel_framebuf = PixelFramebuffer(
+    pixels,
+    pixel_width,
+    pixel_height,
+    alternating=False,
+)
+
+#  array of colors for the LEDs
+#  goes from purple to red
+#  gradient generated using https://colordesigner.io/gradient-generator
+heatmap = [0xb000ff,0xa600ff,0x9b00ff,0x8f00ff,0x8200ff,
+           0x7400ff,0x6500ff,0x5200ff,0x3900ff,0x0003ff,
+           0x0003ff,0x0047ff,0x0066ff,0x007eff,0x0093ff,
+           0x00a6ff,0x00b7ff,0x00c8ff,0x00d7ff,0x00e5ff,
+           0x00e0ff,0x00e6fd,0x00ecf6,0x00f2ea,0x00f6d7,
+           0x00fac0,0x00fca3,0x00fe81,0x00ff59,0x00ff16,
+           0x00ff16,0x45ff08,0x62ff00,0x78ff00,0x8bff00,
+           0x9bff00,0xaaff00,0xb8ff00,0xc5ff00,0xd1ff00,
+           0xedff00,0xf5eb00,0xfcd600,0xffc100,0xffab00,
+           0xff9500,0xff7c00,0xff6100,0xff4100,0xff0000,
+           0xff0000,0xff0000]
 
 strip = neopixel.NeoPixel(led_pin, n_pixels, brightness=0.1, auto_write=True)
+
+# Set up analog mic
+mic = AnalogIn(board.A2)
+# dc_offset = 0  # DC offset in mic signal - if unusure, leave 0
+# noise = 100  # Noise/hum/interference in mic signal
+# samples = 60  # Length of buffer for dynamic level adjustment
+
+# lvl = 10  # Current "dampened" audio level
+# min_level_avg = 0  # For dynamic adjustment of graph low & high
+# max_level_avg = 512
+
+# Size of the FFT data sample
+fft_size = 64
+#  Use some extra sample to account for the mic startup
+samples_bit = array.array('H', [0] * (fft_size+3))
+
+#  sends visualized data to the RGB matrix with colors
+def waves(data, y):
+    offset = max(0, (13-len(data))//2)
+
+    for x in range(min(13, len(data))):
+        # is31.pixel(x+offset, y, heatmap[int(data[x])])
+        # Try pixel_framebuf instead of is31 board
+        pixel_framebuf.display(x+offset, y, heatmap[int(data[x])])
+
+
+
+# Main loop
+def main():
+    #  value for audio samples
+    max_all = 10
+    #  variable to move data along the matrix
+    scroll_offset = 0
+    #  setting the y axis value to equal the scroll_offset
+    y = scroll_offset
+
+    while True:
+        #  record the audio sample
+        mic.record(samples_bit, len(samples_bit))
+        #  send the sample to the ulab array
+        samples = np.array(samples_bit[3:])
+        #  creates a spectogram of the data
+        spectrogram1 = spectrogram(samples)
+        # spectrum() is always nonnegative, but add a tiny value
+        # to change any zeros to nonzero numbers
+        spectrogram1 = np.log(spectrogram1 + 1e-7)
+        spectrogram1 = spectrogram1[1:(fft_size//2)-1]
+        #  sets range of the spectrogram
+        min_curr = np.min(spectrogram1)
+        max_curr = np.max(spectrogram1)
+        #  resets values
+        if max_curr > max_all:
+            max_all = max_curr
+        else:
+            max_curr = max_curr-1
+        min_curr = max(min_curr, 3)
+        # stores spectrogram in data
+        data = (spectrogram1 - min_curr) * (51. / (max_all - min_curr))
+        # sets negative numbers to zero
+        data = data * np.array((data > 0))
+        #  resets y
+        y = scroll_offset
+        #  runs waves to write data to the LED's
+        waves(data, y)
+        #  updates scroll_offset to move data along matrix
+        scroll_offset = (y + 1) % 9
+        #  writes data to the RGB matrix
+        pixel_framebuf.display()
