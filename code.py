@@ -13,6 +13,7 @@ from ulab import numpy as np
 from ulab.scipy.signal import spectrogram
 
 # Import PixelFramebuffer
+# import helper
 from adafruit_pixel_framebuf import PixelFramebuffer
 from adafruit_led_animation.helper import PixelMap
 
@@ -38,10 +39,18 @@ pixels = neopixel.NeoPixel(
 )
 
 pixel_framebuf = PixelFramebuffer(
-    pixels,
+    board.D6,
     pixel_width,
     pixel_height,
     alternating=False,
+)
+
+# From pixel-mapping guide in led-animations
+pixel_wing_vertical = helper.PixelMap.vertical_lines(
+    pixels, 8, 4, helper.horizontal_strip_gridmap(8, alternating=False)
+)
+pixel_wing_horizontal = helper.PixelMap.horizontal_lines(
+    pixels, 8, 4, helper.horizontal_strip_gridmap(8, alternating=False)
 )
 
 #  array of colors for the LEDs
@@ -59,7 +68,7 @@ heatmap = [0xb000ff,0xa600ff,0x9b00ff,0x8f00ff,0x8200ff,
            0xff9500,0xff7c00,0xff6100,0xff4100,0xff0000,
            0xff0000,0xff0000]
 
-strip = neopixel.NeoPixel(led_pin, n_pixels, brightness=0.1, auto_write=True)
+# strip = neopixel.NeoPixel(led_pin, n_pixels, brightness=0.1, auto_write=True)
 
 # Set up analog mic
 mic = AnalogIn(board.A2)
@@ -85,7 +94,9 @@ def waves(data, y):
     for x in range(min(13, len(data))):
         # is31.pixel(x+offset, y, heatmap[int(data[x])])
         # Try pixel_framebuf instead of is31 board
-        pixel_framebuf.display(x+offset, y, heatmap[int(data[x])])
+        pixels_to_pass =  x+offset, y, heatmap[int(data[x])]
+        print(pixels_to_pass)
+        pixel_framebuf.display()
 
 
 
@@ -131,15 +142,20 @@ def main():
         
         # sets negative numbers to zero
         data = data * np.array((data > 0))
+        print(data)
         
         #  resets y
         y = scroll_offset
         
         #  runs waves to write data to the LED's
         waves(data, y)
+        print(waves)
         
         #  updates scroll_offset to move data along matrix
         scroll_offset = (y + 1) % 9
         
         #  writes data to the RGB matrix
+        pixel_framebuf.fill(waves,y)
         pixel_framebuf.display()
+
+main()
