@@ -22,7 +22,7 @@ from adafruit_led_animation import helper
 
 
 # Set NeoPixel
-led_pin = board.D6  # NeoPixel LED strand is connected to GPIO #0 / D0
+# led_pin = board.D6  # NeoPixel LED strand is connected to GPIO #0 / D0
 n_pixels = 32  # Number of pixels you are using
 top = n_pixels + 1  # Allow dot to go slightly off scale
 
@@ -31,26 +31,11 @@ top = n_pixels + 1  # Allow dot to go slightly off scale
 pixel_width = 8
 pixel_height = 4
 
-pixels = neopixel.NeoPixel(
-    led_pin,
-    pixel_width * pixel_height,
-    brightness=0.1,
-    auto_write=False,
-)
-
 pixel_framebuf = PixelFramebuffer(
     board.D6,
     pixel_width,
     pixel_height,
     alternating=False,
-)
-
-# From pixel-mapping guide in led-animations
-pixel_wing_vertical = helper.PixelMap.vertical_lines(
-    pixels, 8, 4, helper.horizontal_strip_gridmap(8, alternating=False)
-)
-pixel_wing_horizontal = helper.PixelMap.horizontal_lines(
-    pixels, 8, 4, helper.horizontal_strip_gridmap(8, alternating=False)
 )
 
 #  array of colors for the LEDs
@@ -95,7 +80,8 @@ def waves(data, y):
         # is31.pixel(x+offset, y, heatmap[int(data[x])])
         # Try pixel_framebuf instead of is31 board
         pixels_to_pass =  x+offset, y, heatmap[int(data[x])]
-        print(pixels_to_pass)
+        print("Pixels to pass: ", pixels_to_pass, "Type: ", type(pixels_to_pass))
+        pixel_framebuf.pixel(pixels_to_pass[0], pixels_to_pass[1], pixels_to_pass[2])
         pixel_framebuf.display()
 
 
@@ -111,7 +97,7 @@ def main():
 
     while True:
         #  record the audio sample
-        mic_sample = mic.value / 64
+        mic_sample = mic.value
         print("Mic sample: ", mic_sample)
         
         #  send the sample to the ulab array
@@ -119,6 +105,7 @@ def main():
         
         #  creates a spectogram of the data
         spectrogram1 = spectrogram(samples)
+        print("Spec1", spectrogram1)
         
         # spectrum() is always nonnegative, but add a tiny value
         # to change any zeros to nonzero numbers
@@ -142,20 +129,21 @@ def main():
         
         # sets negative numbers to zero
         data = data * np.array((data > 0))
-        print(data)
+        print("Data", data)
         
         #  resets y
         y = scroll_offset
         
         #  runs waves to write data to the LED's
+        print("Data & Y", data,y)
         waves(data, y)
-        print(waves)
         
         #  updates scroll_offset to move data along matrix
         scroll_offset = (y + 1) % 9
         
         #  writes data to the RGB matrix
-        pixel_framebuf.fill(waves,y)
+        # pixel_framebuf.fill(waves)
+        pixel_framebuf.pixel(waves, y)
         pixel_framebuf.display()
 
 main()
