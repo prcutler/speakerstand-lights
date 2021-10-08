@@ -22,7 +22,7 @@ from adafruit_led_animation import helper
 
 
 # Set NeoPixel
-# led_pin = board.D6  # NeoPixel LED strand is connected to GPIO #0 / D0
+pixel_pin = board.D6  # NeoPixel LED strand is connected to GPIO #0 / D0
 n_pixels = 32  # Number of pixels you are using
 top = n_pixels + 1  # Allow dot to go slightly off scale
 
@@ -31,8 +31,15 @@ top = n_pixels + 1  # Allow dot to go slightly off scale
 pixel_width = 8
 pixel_height = 4
 
+pixels = neopixel.NeoPixel(
+    pixel_pin,
+    pixel_width * pixel_height,
+    brightness=0.1,
+    auto_write=False,
+)
+
 pixel_framebuf = PixelFramebuffer(
-    board.D6,
+    pixels,
     pixel_width,
     pixel_height,
     alternating=False,
@@ -78,13 +85,14 @@ def waves(data, y):
 
     for x in range(min(13, len(data))):
         # is31.pixel(x+offset, y, heatmap[int(data[x])])
-        # Try pixel_framebuf instead of is31 board
-        pixels_to_pass =  x+offset, y, heatmap[int(data[x])]
-        print("Pixels to pass: ", pixels_to_pass, "Type: ", type(pixels_to_pass))
-        pixel_framebuf.pixel(pixels_to_pass[0], pixels_to_pass[1], pixels_to_pass[2])
+        pixel_framebuf.pixel(x+offset, y, heatmap[int(data[x])])
         pixel_framebuf.display()
 
-
+        # Try pixel_framebuf instead of is31 board
+        #pixels_to_pass =  x+offset, y, heatmap[int(data[x])]
+        #print("Pixels to pass: ", pixels_to_pass, "Type: ", type(pixels_to_pass))
+        #pixel_framebuf.pixel(pixels_to_pass[0], pixels_to_pass[1], pixels_to_pass[2])
+        #pixel_framebuf.display()
 
 # Main loop
 def main():
@@ -135,14 +143,14 @@ def main():
         y = scroll_offset
         
         #  runs waves to write data to the LED's
-        print("Data & Y", data,y)
+        print("Data & Y", data, y, "Type: ", type(data), type(y))
         waves(data, y)
         
         #  updates scroll_offset to move data along matrix
         scroll_offset = (y + 1) % 9
         
         #  writes data to the RGB matrix
-        # pixel_framebuf.fill(waves)
+        print(waves, y)
         pixel_framebuf.pixel(waves, y)
         pixel_framebuf.display()
 
