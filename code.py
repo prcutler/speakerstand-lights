@@ -12,6 +12,10 @@ from analogio import AnalogIn
 from ulab import numpy as np
 from ulab.scipy.signal import spectrogram
 
+# Digital Audio 
+import audiocore
+import audiobusio
+
 # Import PixelFramebuffer
 # import helper
 from adafruit_pixel_framebuf import PixelFramebuffer
@@ -62,11 +66,9 @@ heatmap = [0xb000ff,0xa600ff,0x9b00ff,0x8f00ff,0x8200ff,
 
 # strip = neopixel.NeoPixel(led_pin, n_pixels, brightness=0.1, auto_write=True)
 
-# Set up analog mic
-mic = AnalogIn(board.A2)
-# dc_offset = 0  # DC offset in mic signal - if unusure, leave 0
-# noise = 100  # Noise/hum/interference in mic signal
-# samples = 60  # Length of buffer for dynamic level adjustment
+# Set up digial mic
+mic = audiobusio.PDMIn(board.D10, board.D9,
+                       sample_rate=16000, bit_depth=16)
 
 # lvl = 10  # Current "dampened" audio level
 # min_level_avg = 0  # For dynamic adjustment of graph low & high
@@ -77,7 +79,7 @@ fft_size = 64
 
 #  Use some extra sample to account for the mic startup
 samples_bit = array.array('H', [0] * (fft_size+3))
-print(samples_bit)
+print("Samples bit: ", samples_bit)
 
 #  sends visualized data to the RGB matrix with colors
 def waves(data, y):
@@ -96,17 +98,18 @@ def waves(data, y):
 
 # Main loop
 def main():
+
     #  value for audio samples
     max_all = 10
     #  variable to move data along the matrix
     scroll_offset = 0
     #  setting the y axis value to equal the scroll_offset
     y = scroll_offset
+    print("y: ", y)
 
     while True:
         #  record the audio sample
-        mic_sample = mic.value
-        print("Mic sample: ", mic_sample)
+        mic.record(samples_bit, len(samples_bit))
         
         #  send the sample to the ulab array
         samples = np.array(samples_bit[3:])
@@ -151,7 +154,7 @@ def main():
         
         #  writes data to the RGB matrix
         print(waves, y)
-        pixel_framebuf.pixel(waves, y)
-        pixel_framebuf.display()
+        #pixel_framebuf.pixel(waves, y)
+        #pixel_framebuf.display()
 
 main()
