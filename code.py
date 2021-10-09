@@ -24,8 +24,6 @@ from adafruit_led_animation.helper import PixelMap
 # Import from featherwing example
 from adafruit_led_animation import helper
 
-# TODO: Check licenses of both examples above
-
 # Set NeoPixel
 pixel_pin = board.D6  # NeoPixel LED strand is connected to GPIO #0 / D0
 n_pixels = 32  # Number of pixels you are using
