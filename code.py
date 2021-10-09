@@ -13,31 +13,27 @@ from ulab import numpy as np
 from ulab.scipy.signal import spectrogram
 
 # Digital Audio 
-import audiocore
 import audiobusio
 
 # Import PixelFramebuffer
-# import helper
 from adafruit_pixel_framebuf import PixelFramebuffer
-from adafruit_led_animation.helper import PixelMap
 
 # Import from featherwing example
 from adafruit_led_animation import helper
 
-# Set NeoPixel
+
+# Set-up NeoPixel
 pixel_pin = board.D6  # NeoPixel LED strand is connected to GPIO #0 / D0
-n_pixels = 32  # Number of pixels you are using
-top = n_pixels + 1  # Allow dot to go slightly off scale
 
 # Add Neopixel Featherwing vertical and horizontal functions
-
 pixel_width = 8
 pixel_height = 4
 
+# Assign pixels and framebuf
 pixels = neopixel.NeoPixel(
     pixel_pin,
     pixel_width * pixel_height,
-    brightness=0.1,
+    brightness=0.05,
     auto_write=False,
 )
 
@@ -45,7 +41,6 @@ pixel_framebuf = PixelFramebuffer(
     pixels,
     pixel_width,
     pixel_height,
-    brightness=0.1,
     alternating=False,
 )
 
@@ -64,18 +59,13 @@ heatmap = [0xb000ff,0xa600ff,0x9b00ff,0x8f00ff,0x8200ff,
            0xff9500,0xff7c00,0xff6100,0xff4100,0xff0000,
            0xff0000,0xff0000]
 
-# strip = neopixel.NeoPixel(led_pin, n_pixels, brightness=0.1, auto_write=True)
 
 # Set up digial mic
 mic = audiobusio.PDMIn(board.D10, board.D9,
                        sample_rate=16000, bit_depth=16)
 
-# lvl = 10  # Current "dampened" audio level
-# min_level_avg = 0  # For dynamic adjustment of graph low & high
-# max_level_avg = 512
-
 # Size of the FFT data sample
-fft_size = 32
+fft_size = 64
 
 #  Use some extra sample to account for the mic startup
 samples_bit = array.array('H', [0] * (fft_size+3))
@@ -90,22 +80,17 @@ def waves(data, y):
         pixel_framebuf.pixel(x+offset, y, heatmap[int(data[x])])
         pixel_framebuf.display()
 
-        # Try pixel_framebuf instead of is31 board
-        #pixels_to_pass =  x+offset, y, heatmap[int(data[x])]
-        #print("Pixels to pass: ", pixels_to_pass, "Type: ", type(pixels_to_pass))
-        #pixel_framebuf.pixel(pixels_to_pass[0], pixels_to_pass[1], pixels_to_pass[2])
-        #pixel_framebuf.display()
-
 # Main loop
 def main():
 
     #  value for audio samples
     max_all = 10
+
     #  variable to move data along the matrix
     scroll_offset = 0
+
     #  setting the y axis value to equal the scroll_offset
     y = scroll_offset
-    # print(y)
 
     while True:
         #  record the audio sample
@@ -146,15 +131,13 @@ def main():
         y = scroll_offset
 
         #  runs waves to write data to the LED's
-        # print("Data & Y", data, y, "Type: ", type(data), type(y))
         waves(data, y)
         
         #  updates scroll_offset to move data along matrix
         scroll_offset = (y + 1) % 9
         
-        #  writes data to the RGB matrix
-        # print(waves, y)
-        pixel_framebuf.pixel(waves, y)
-        pixel_framebuf.display()
+        # Does not print to the display here like the original code
+        #pixel_framebuf.pixel(waves, y)
+        #pixel_framebuf.display()
 
 main()
