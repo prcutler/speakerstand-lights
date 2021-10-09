@@ -10,6 +10,8 @@ I can't take credit for probably 90% of the code, it was adapted from these two 
 
 I will be installing the NeoPixel FeatherWing in AudioEngine P4 speaker stands which I will be 3D printing (and will add the CAD and STL files here when complete).  This will include a cutout for the NeoPixel FeatherWing on the front and the USB power cable on the back.
 
+The code works with the NeoPixels reacting to volume, but it needs to be tweaked to lower the ceiling and raise the floor of how far the pixels move.  The included code was originally written for a 13x9 matrix and I'm using a 4x8 matrix via the `adafruit_pixel_framebuf` library.
+
 AudioEngine P4 speaker on its stand with the NeoPixel FeatherWing:
 
 ![AudioEngine P4 speaker on its stand with the NeoPixel FeatherWing](/pictures/speaker-feather.png)
