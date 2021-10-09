@@ -8,5 +8,15 @@ I can't take credit for probably 90% of the code, it was adapted from these two 
 
 * Also adapted from [Mini LED Matrix Audio Visualizer](https://learn.adafruit.com/mini-led-matrix-audio-visualizer/code-the-mini-led-matrix-audio-visualizer) by Liz Clark
 
-I will be installing the NeoPixel FeatherWing in AudioEngine P4 speaker stands which I will be 3D printing (and will add the CAD and STL files here when complete).
+I will be installing the NeoPixel FeatherWing in AudioEngine P4 speaker stands which I will be 3D printing (and will add the CAD and STL files here when complete).  This will include a cutout for the NeoPixel FeatherWing on the front and the USB power cable on the back.
+
+AudioEngine P4 speaker on its stand with the NeoPixel FeatherWing:
+
+![AudioEngine P4 speaker on its stand with the NeoPixel FeatherWing](/pictures/speaker-feather.png)
+
+Original speaker stands for the P4 / H4 from AudioEngine:
+
+![Original speaker stands for the P4 / H4 from AudioEngine:](/pictures/p4-speakerstand.jpg)
+
+
 
