@@ -27,7 +27,7 @@
 # Modified fromhere code by Greg Shakar
 # Ported to Circuit Python by Mikey Sklar
 
-# Code runs but no lights
+# Sound reactive works but still lights up the whole strip
 # TODO: Try vertical lines of 4 pixes
 
 import time
@@ -226,13 +226,19 @@ while True:
                 signalmin = sample  # save just the min levels
 
     peaktopeak = signalmax - signalmin  # max - min = peak-peak amplitude
+    print(peaktopeak)
 
     # Fill the strip with rainbow gradient
     # Change to use the pixel_map columns
-    for i in range(0, pixel_width):
-        pm_col_list[i] = wheel(remapRange(i, 0, (pixel_height - 1), 30, 150))
-        pixel_framebuf.display()
+#     for i in range(0, pixel_width):
+ #       pm_col_list[i] = wheel(remapRange(i, 0, (pixel_height + 1), 30, 150))
+  #      pixel_framebuf.display()
         # print(strip[i])
+
+    for i in range(0, pixel_width):
+        for y in range(pixel_height):
+            wheel(remapRange(i, 0, (pixel_height + 1), 30, 150))
+            pixel_framebuf.display()
 
     # Scale the input logarithmically instead of linearly
     # Replace n_pixels with pixel_height through end of file
@@ -241,7 +247,8 @@ while True:
     if c < peak:
         peak = c  # keep dot on top
         dothangcount = 0  # make the dot hang before falling
-
+        
+        # TODO: This needs to be fixed
        # pixel_framebuf.line takes 6 positional arguments 
        # adafruit_pixel_framebuf.PixelFramebuffer(pixels, width, height, 
        # orientation=1, alternating=True, reverse_x=False, 
@@ -249,11 +256,12 @@ while True:
         
         # pixel_framebuf.line(0, 0, pixel_width - 1, pixel_height - 1, 0x00FF00)
 
-    if c <= pixel_height:  # fill partial column with off pixels
-        # Need to pass 6 positional arguments (the correct ones)
-        pixel_framebuf.line()
-        pixel_framebuf.display()
+    # TODO: This needs to be fixed
+    # if c <= pixel_height:  # fill partial column with off pixels
+    #     pixel_framebuf.line()
+    #     pixel_framebuf.display()
 
+    # TODO: This needs to be fixed
     # Set the peak dot to match the rainbow gradient
     #y = pixel_height - peak
     #pixel_framebuf.fill(
@@ -270,4 +278,4 @@ while True:
             dotcount = 0
     else:
         dothangcount += 1
-    print(c)
+    # print(c)
