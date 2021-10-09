@@ -24,6 +24,7 @@ from adafruit_led_animation.helper import PixelMap
 # Import from featherwing example
 from adafruit_led_animation import helper
 
+# TODO: Check licenses of both examples above
 
 # Set NeoPixel
 pixel_pin = board.D6  # NeoPixel LED strand is connected to GPIO #0 / D0
@@ -46,6 +47,7 @@ pixel_framebuf = PixelFramebuffer(
     pixels,
     pixel_width,
     pixel_height,
+    brightness=0.1,
     alternating=False,
 )
 
@@ -154,7 +156,7 @@ def main():
         
         #  writes data to the RGB matrix
         # print(waves, y)
-        #pixel_framebuf.pixel(waves, y)
-        #pixel_framebuf.display()
+        pixel_framebuf.pixel(waves, y)
+        pixel_framebuf.display()
 
 main()
