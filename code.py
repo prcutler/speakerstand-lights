@@ -75,11 +75,11 @@ mic = audiobusio.PDMIn(board.D10, board.D9,
 # max_level_avg = 512
 
 # Size of the FFT data sample
-fft_size = 64
+fft_size = 32
 
 #  Use some extra sample to account for the mic startup
 samples_bit = array.array('H', [0] * (fft_size+3))
-print("Samples bit: ", samples_bit)
+# print("Samples bit: ", samples_bit)
 
 #  sends visualized data to the RGB matrix with colors
 def waves(data, y):
@@ -105,7 +105,7 @@ def main():
     scroll_offset = 0
     #  setting the y axis value to equal the scroll_offset
     y = scroll_offset
-    print("y: ", y)
+    # print(y)
 
     while True:
         #  record the audio sample
@@ -116,7 +116,7 @@ def main():
         
         #  creates a spectogram of the data
         spectrogram1 = spectrogram(samples)
-        print("Spec1", spectrogram1)
+        # print("Spec1", spectrogram1)
         
         # spectrum() is always nonnegative, but add a tiny value
         # to change any zeros to nonzero numbers
@@ -140,20 +140,20 @@ def main():
         
         # sets negative numbers to zero
         data = data * np.array((data > 0))
-        print("Data", data)
+        # print("Data", data)
         
         #  resets y
         y = scroll_offset
-        
+
         #  runs waves to write data to the LED's
-        print("Data & Y", data, y, "Type: ", type(data), type(y))
+        # print("Data & Y", data, y, "Type: ", type(data), type(y))
         waves(data, y)
         
         #  updates scroll_offset to move data along matrix
         scroll_offset = (y + 1) % 9
         
         #  writes data to the RGB matrix
-        print(waves, y)
+        # print(waves, y)
         #pixel_framebuf.pixel(waves, y)
         #pixel_framebuf.display()
 
