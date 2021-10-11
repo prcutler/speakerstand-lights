@@ -121,6 +121,7 @@ def main():
         min_curr = max(min_curr, 3)
         
         # stores spectrogram in data
+        # Does the 51  here come from the heatmap?
         data = (spectrogram1 - min_curr) * (51. / (max_all - min_curr))
         
         # sets negative numbers to zero
