@@ -122,7 +122,7 @@ def main():
         
         # stores spectrogram in data
         # Does the 51  here come from the heatmap?
-        data = (spectrogram1 - min_curr) * (51. / (max_all - min_curr))
+        data = (spectrogram1 - min_curr) * (25. / (max_all - min_curr))
         
         # sets negative numbers to zero
         data = data * np.array((data > 0))
