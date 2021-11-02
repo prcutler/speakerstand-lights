@@ -1,16 +1,17 @@
-'''Adapted from the FFT Example: Waterfall Spectrum Analyzer
-by Jeff Epler
-https://learn.adafruit.com/ulab-crunch-numbers-fast-with-circuitpython/overview '''
+"""AUDIO SPECTRUM LIGHT SHOW for Adafruit EyeLights (LED Glasses + Driver). 
+From https://github.com/adafruit/Adafruit_Learning_System_Guides/blob/main/EyeLights_Audio_Spectrum/code.py 
+"""
 
-'''Also adapted from Mini LED Matrix Audio Visualizer by Liz Clark
-https://learn.adafruit.com/mini-led-matrix-audio-visualizer/code-the-mini-led-matrix-audio-visualizer '''
-
-import array
+import array import array
+from math import log
 import board
 import neopixel
-from analogio import AnalogIn
+from audiobusio import PDMIn
 from ulab import numpy as np
 from ulab.scipy.signal import spectrogram
+from supervisor import reload
+from rainbowio import colorwheel
+
 
 # Digital Audio 
 import audiocore
@@ -24,13 +25,22 @@ from adafruit_led_animation.helper import PixelMap
 # Import from featherwing example
 from adafruit_led_animation import helper
 
+
+# FFT/SPECTRUM CONFIG ----
+
+fft_size = 256  # Sample size for Fourier transform, MUST be power of two
+spectrum_size = fft_size // 2  # Output spectrum is 1/2 of FFT result
+# Bottom of spectrum tends to be noisy, while top often exceeds musical
+# range and is just harmonics, so clip both ends off:
+low_bin = 10  # Lowest bin of spectrum that contributes to graph
+high_bin = 75  # Highest bin "
+
 # Set NeoPixel
 pixel_pin = board.D6  # NeoPixel LED strand is connected to GPIO #0 / D0
 n_pixels = 32  # Number of pixels you are using
-top = n_pixels + 1  # Allow dot to go slightly off scale
+
 
 # Add Neopixel Featherwing vertical and horizontal functions
-
 pixel_width = 8
 pixel_height = 4
 
@@ -49,112 +59,51 @@ pixel_framebuf = PixelFramebuffer(
     alternating=False,
 )
 
-#  array of colors for the LEDs
-#  goes from purple to red
-#  gradient generated using https://colordesigner.io/gradient-generator
-heatmap = [0xb000ff,0xa600ff,0x9b00ff,0x8f00ff,0x8200ff,
-           0x7400ff,0x6500ff,0x5200ff,0x3900ff,0x0003ff,
-           0x0003ff,0x0047ff,0x0066ff,0x007eff,0x0093ff,
-           0x00a6ff,0x00b7ff,0x00c8ff,0x00d7ff,0x00e5ff,
-           0x00e0ff,0x00e6fd,0x00ecf6,0x00f2ea,0x00f6d7,
-           0x00fac0,0x00fca3,0x00fe81,0x00ff59,0x00ff16,
-           0x00ff16,0x45ff08,0x62ff00,0x78ff00,0x8bff00,
-           0x9bff00,0xaaff00,0xb8ff00,0xc5ff00,0xd1ff00,
-           0xedff00,0xf5eb00,0xfcd600,0xffc100,0xffab00,
-           0xff9500,0xff7c00,0xff6100,0xff4100,0xff0000,
-           0xff0000,0xff0000]
-
-# strip = neopixel.NeoPixel(led_pin, n_pixels, brightness=0.1, auto_write=True)
 
 # Set up digial mic
 mic = audiobusio.PDMIn(board.D10, board.D9,
                        sample_rate=16000, bit_depth=16)
 
-# lvl = 10  # Current "dampened" audio level
-# min_level_avg = 0  # For dynamic adjustment of graph low & high
-# max_level_avg = 512
+# FFT/SPECTRUM SETUP -----
 
-# Size of the FFT data sample
-fft_size = 32
+# To keep the display lively, tables are precomputed where each column of
+# the matrix (of which there are few) is the sum value and weighting of
+# several bins from the FFT spectrum output (of which there are many).
+# The tables also help visually linearize the output so octaves are evenly
+# spaced, as on a piano keyboard, whereas the source spectrum data is
+# spaced by frequency in Hz.
+column_table = []
 
-#  Use some extra sample to account for the mic startup
-samples_bit = array.array('H', [0] * (fft_size+3))
-# print("Samples bit: ", samples_bit)
+spectrum_bits = log(spectrum_size, 2)  # e.g. 7 for 128-bin spectrum
+# Scale low_bin and high_bin to 0.0 to 1.0 equivalent range in spectrum
+low_frac = log(low_bin, 2) / spectrum_bits
+frac_range = log(high_bin, 2) / spectrum_bits - low_frac
 
-#  sends visualized data to the RGB matrix with colors
-def waves(data, y):
-    offset = max(0, (13-len(data))//2)
-
-    for x in range(min(13, len(data))):
-        # is31.pixel(x+offset, y, heatmap[int(data[x])])
-        pixel_framebuf.pixel(x+offset, y, heatmap[int(data[x])])
-        pixel_framebuf.display()
-
-        # Try pixel_framebuf instead of is31 board
-        #pixels_to_pass =  x+offset, y, heatmap[int(data[x])]
-        #print("Pixels to pass: ", pixels_to_pass, "Type: ", type(pixels_to_pass))
-        #pixel_framebuf.pixel(pixels_to_pass[0], pixels_to_pass[1], pixels_to_pass[2])
-        #pixel_framebuf.display()
-
-# Main loop
-def main():
-
-    #  value for audio samples
-    max_all = 10
-    #  variable to move data along the matrix
-    scroll_offset = 0
-    #  setting the y axis value to equal the scroll_offset
-    y = scroll_offset
-    # print(y)
-
-    while True:
-        #  record the audio sample
-        mic.record(samples_bit, len(samples_bit))
-        
-        #  send the sample to the ulab array
-        samples = np.array(samples_bit[3:])
-        
-        #  creates a spectogram of the data
-        spectrogram1 = spectrogram(samples)
-        # print("Spec1", spectrogram1)
-        
-        # spectrum() is always nonnegative, but add a tiny value
-        # to change any zeros to nonzero numbers
-        spectrogram1 = np.log(spectrogram1 + 1e-7)
-        spectrogram1 = spectrogram1[1:(fft_size//2)-1]
-        
-        #  sets range of the spectrogram
-        min_curr = np.min(spectrogram1)
-        max_curr = np.max(spectrogram1)
-        
-        #  resets values
-        if max_curr > max_all:
-            max_all = max_curr
-        else:
-            max_curr = max_curr-1
-        
-        min_curr = max(min_curr, 3)
-        
-        # stores spectrogram in data
-        data = (spectrogram1 - min_curr) * (51. / (max_all - min_curr))
-        
-        # sets negative numbers to zero
-        data = data * np.array((data > 0))
-        # print("Data", data)
-        
-        #  resets y
-        y = scroll_offset
-
-        #  runs waves to write data to the LED's
-        # print("Data & Y", data, y, "Type: ", type(data), type(y))
-        waves(data, y)
-        
-        #  updates scroll_offset to move data along matrix
-        scroll_offset = (y + 1) % 9
-        
-        #  writes data to the RGB matrix
-        # print(waves, y)
-        pixel_framebuf.pixel(waves, y)
-        pixel_framebuf.display()
-
-main()
+for column in range(pixel_width):
+    # Determine the lower and upper frequency range for this column, as
+    # fractions within the scaled 0.0 to 1.0 spectrum range. 0.95 below
+    # creates slight frequency overlap between columns, looks nicer.
+    lower = low_frac + frac_range * (column / pixel_width * 0.95)
+    upper = low_frac + frac_range * ((column + 1) / pixel_width)
+    mid = (lower + upper) * 0.5  # Center of lower-to-upper range
+    half_width = (upper - lower) * 0.5  # 1/2 of lower-to-upper range
+    # Map fractions back to spectrum bin indices that contribute to column
+    first_bin = int(2 ** (spectrum_bits * lower) + 1e-4)
+    last_bin = int(2 ** (spectrum_bits * upper) + 1e-4)
+    bin_weights = []  # Each spectrum bin's weighting will be added here
+    for bin_index in range(first_bin, last_bin + 1):
+        # Find distance from column's overall center to individual bin's
+        # center, expressed as 0.0 (bin at center) to 1.0 (bin at limit of
+        # lower-to-upper range).
+        bin_center = log(bin_index + 0.5, 2) / spectrum_bits
+        dist = abs(bin_center - mid) / half_width
+        if dist < 1.0:  # Filter out a few math stragglers at either end
+            # Bin weights have a cubic falloff curve within range:
+            dist = 1.0 - dist  # Invert dist so 1.0 is at center
+            bin_weights.append(((3.0 - (dist * 2.0)) * dist) * dist)
+    # Scale bin weights so total is 1.0 for each column, but then mute
+    # lower columns slightly and boost higher columns. It graphs better.
+    total = sum(bin_weights)
+    bin_weights = [
+        (weight / total) * (0.8 + idx / pixel_width * 1.4)
+        for idx, weight in enumerate(bin_weights)
