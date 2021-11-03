@@ -1,4 +1,6 @@
-"""AUDIO SPECTRUM LIGHT SHOW for Adafruit EyeLights (LED Glasses + Driver). 
+"""NeoPixel Featherwing with rp2040 Feather Audio Reactive Lights"""
+
+"""Based on AUDIO SPECTRUM LIGHT SHOW for Adafruit EyeLights (LED Glasses + Driver). 
 From https://github.com/adafruit/Adafruit_Learning_System_Guides/blob/main/EyeLights_Audio_Spectrum/code.py 
 """
 
@@ -33,8 +35,9 @@ fft_size = 256  # Sample size for Fourier transform, MUST be power of two
 spectrum_size = fft_size // 2  # Output spectrum is 1/2 of FFT result
 # Bottom of spectrum tends to be noisy, while top often exceeds musical
 # range and is just harmonics, so clip both ends off:
-low_bin = 10  # Lowest bin of spectrum that contributes to graph
-high_bin = 75  # Highest bin "
+# Original low = 10 and high = 75
+low_bin = 30  # Lowest bin of spectrum that contributes to graph
+high_bin = 60  # Highest bin "
 
 # Set NeoPixel
 pixel_pin = board.D6  # NeoPixel LED strand is connected to GPIO #0 / D0
