@@ -1,7 +1,12 @@
+
+# SPDX-FileCopyrightText: 2021 Phil Burgess for Adafruit Industries
+#
+# SPDX-License-Identifier: MIT
+
 """NeoPixel Featherwing with rp2040 Feather Audio Reactive Lights"""
 
 """Based on AUDIO SPECTRUM LIGHT SHOW for Adafruit EyeLights (LED Glasses + Driver). 
-From https://github.com/adafruit/Adafruit_Learning_System_Guides/blob/main/EyeLights_Audio_Spectrum/code.py 
+From https://github.com/adafruit/Adafruit_Learning_System_Guides/blob/main/EyeLights_Audio_Spectrum/EyeLights_Audio_Spectrum_CircuitPython/code.py
 """
 
 from array import array
@@ -133,8 +138,8 @@ print(column_table)
 
 
 # MAIN LOOP -------------
-
-dynamic_level = 10  # For responding to changing volume levels
+# Original dynamic_level = 10
+dynamic_level = 35  # For responding to changing volume levels
 frames, start_time = 0, time.monotonic()  # For frames-per-second calc
 
 while True:
