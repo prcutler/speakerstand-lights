@@ -36,8 +36,8 @@ spectrum_size = fft_size // 2  # Output spectrum is 1/2 of FFT result
 # Bottom of spectrum tends to be noisy, while top often exceeds musical
 # range and is just harmonics, so clip both ends off:
 # Original low = 10 and high = 75
-low_bin = 30  # Lowest bin of spectrum that contributes to graph
-high_bin = 60  # Highest bin "
+low_bin = 35  # Lowest bin of spectrum that contributes to graph
+high_bin = 55  # Highest bin "
 
 # Set NeoPixel
 pixel_pin = board.D6  # NeoPixel LED strand is connected to GPIO #0 / D0
