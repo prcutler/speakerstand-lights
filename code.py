@@ -35,7 +35,8 @@ fft_size = 256  # Sample size for Fourier transform, MUST be power of two
 spectrum_size = fft_size // 2  # Output spectrum is 1/2 of FFT result
 # Bottom of spectrum tends to be noisy, while top often exceeds musical
 # range and is just harmonics, so clip both ends off:
-# Original low = 10 and high = 75
+# Original low = 10 and high = 75 - cut the spectrum down for better 
+# pixel sound reactions on a smaller screen than the orginal
 low_bin = 35  # Lowest bin of spectrum that contributes to graph
 high_bin = 55  # Highest bin "
 
