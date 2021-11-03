@@ -1,4 +1,6 @@
-"""AUDIO SPECTRUM LIGHT SHOW for Adafruit EyeLights (LED Glasses + Driver). 
+"""NeoPixel Featherwing with rp2040 Feather Audio Reactive Lights"""
+
+"""Based on: AUDIO SPECTRUM LIGHT SHOW for Adafruit EyeLights (LED Glasses + Driver). 
 From https://github.com/adafruit/Adafruit_Learning_System_Guides/blob/main/EyeLights_Audio_Spectrum/code.py 
 """
 
