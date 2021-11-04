@@ -20,10 +20,6 @@ Video never captures LEDs right, but here is an animated gif:
 
 I will be installing the NeoPixel FeatherWing in an AudioEngine P4 speaker stand which I will be 3D printing (and will add the CAD and STL files to the repository when complete).  This will include a cutout for the NeoPixel FeatherWing on the front and the USB power cable on the back.
 
-AudioEngine P4 speaker on its stand with the NeoPixel FeatherWing:
-
-![AudioEngine P4 speaker on its stand with the NeoPixel FeatherWing](/pictures/speaker-feather.png)
-
 Original speaker stands for the P4 / H4 from AudioEngine:
 
 ![Original speaker stands for the P4 / H4 from AudioEngine:](/pictures/p4-speakerstand.jpg)
