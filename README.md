@@ -6,11 +6,11 @@ The `speakerstand-lights` project is written in CircuitPython and     uses a [Ne
 
 Thank you to Adafruit, including Kattni Rembor and Philip Burgess, for the [Adafruit EyeLights LED Glasses Music-Reactive Lights](https://learn.adafruit.com/adafruit-eyelights-led-glasses-and-driver/music-reactive-lights) project.  Better yet, it's released under a MIT license making it easy to modify.
 
-To use with the Feather 2040rp Pico and a FeatherWing NeoPixel, the code needed to be updated to remove the `LED_Glasses` module and replaced with `PixelFramebuffer` from the `adafruit_pixel_framebuf` module.
+To use with the Feather rp2040 Pico and a FeatherWing NeoPixel, the code needed to be updated to remove the `LED_Glasses` module and replaced with `PixelFramebuffer` from the `adafruit_pixel_framebuf` module.
 
 Additionally, I reduced the spectrum the microphone listens for as the NeoPixel FeatherWing has less pixels (8x4) than the original code's 13x9 LED matrix.
 
-I commented out the original code and included the original spectrum vairables in the comments.
+I commented out the original code and included the original spectrum variables in the comments.
 
 ### Part Two - 3D Printing a new speaker stand
 
