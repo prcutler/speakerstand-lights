@@ -4,6 +4,8 @@ The `speakerstand-lights` project is written in CircuitPython and     uses a [Ne
 
 You will need to know the basics of soldering to stack the Feathers and to attach the microphone.
 
+Learn more at the [project homepage](https://paulcutler.org/project/speakerstand-lights/).
+
 ### Part 1: CircuitPython Code
 
 Thank you to Adafruit, including Kattni Rembor and Philip Burgess, for the [Adafruit EyeLights LED Glasses Music-Reactive Lights](https://learn.adafruit.com/adafruit-eyelights-led-glasses-and-driver/music-reactive-lights) project.  Better yet, it's released under a MIT license making it easy to modify.  Using this code, I only had to change a few lines to make it work with the NeoPixel FeatherWing!
