@@ -12,6 +12,10 @@ Additionally, I reduced the spectrum the microphone listens for as the NeoPixel 
 
 I commented out the original code and included the original spectrum variables in the comments.
 
+Video never captures LEDs right, but here is an animated gif:
+
+![Audio Reactive NeoPixels](/pictures/neopixel-feather.gif)
+
 ### Part Two - 3D Printing a new speaker stand
 
 I will be installing the NeoPixel FeatherWing in AudioEngine P4 speaker stands which I will be 3D printing (and will add the CAD and STL files here when complete).  This will include a cutout for the NeoPixel FeatherWing on the front and the USB power cable on the back.
