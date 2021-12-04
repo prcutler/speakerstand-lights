@@ -22,7 +22,7 @@ I commented out the original code and included the original spectrum variables i
 
 Video never captures LEDs right, but here is an animated gif:
 
-![Audio Reactive NeoPixels](/pictures/neopixel-feather.gif)
+![Audio Reactive NeoPixels](/pictures/speakerstand-featherwing.gif)
 
 ### Part Two - 3D Printing a new speaker stand
 
