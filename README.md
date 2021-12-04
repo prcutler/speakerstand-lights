@@ -8,7 +8,7 @@ The `speakerstand-lights` project is written in CircuitPython and     uses a [Ne
 
 You will need to know the basics of soldering to stack the Feathers and to attach the microphone.
 
-Learn more at the [project homepage](https://paulcutler.org/project/speakerstand-lights/).
+Learn more at the [project homepage](pictures/neopixel-feather.gif).
 
 ### Part 1: CircuitPython Code
 
