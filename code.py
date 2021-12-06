@@ -132,7 +132,7 @@ for column in range(pixel_width):
 
 # MAIN LOOP -------------
 # Original dynamic_level = 10
-dynamic_level = 20  # For responding to changing volume levels
+dynamic_level = 0  # For responding to changing volume levels
 frames, start_time = 0, time.monotonic()  # For frames-per-second calc
 
 while True:
