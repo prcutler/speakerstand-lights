@@ -1,12 +1,7 @@
-
-# SPDX-FileCopyrightText: 2021 Phil Burgess for Adafruit Industries
-#
-# SPDX-License-Identifier: MIT
-
 """NeoPixel Featherwing with rp2040 Feather Audio Reactive Lights"""
 
 """Based on AUDIO SPECTRUM LIGHT SHOW for Adafruit EyeLights (LED Glasses + Driver). 
-From https://github.com/adafruit/Adafruit_Learning_System_Guides/blob/main/EyeLights_Audio_Spectrum/EyeLights_Audio_Spectrum_CircuitPython/code.py
+From https://github.com/adafruit/Adafruit_Learning_System_Guides/blob/main/EyeLights_Audio_Spectrum/code.py 
 """
 
 from array import array
@@ -40,10 +35,9 @@ fft_size = 256  # Sample size for Fourier transform, MUST be power of two
 spectrum_size = fft_size // 2  # Output spectrum is 1/2 of FFT result
 # Bottom of spectrum tends to be noisy, while top often exceeds musical
 # range and is just harmonics, so clip both ends off:
-# Original low = 10 and high = 75 - cut the spectrum down for better 
-# pixel sound reactions on a smaller screen than the orginal
-low_bin = 35  # Lowest bin of spectrum that contributes to graph
-high_bin = 55  # Highest bin "
+# Original low = 10 and high = 75
+low_bin = 20
+high_bin = 40  # Highest bin "
 
 # Set NeoPixel
 pixel_pin = board.D6  # NeoPixel LED strand is connected to GPIO #0 / D0
@@ -67,7 +61,6 @@ pixel_framebuf = PixelFramebuffer(
     pixel_height,
     alternating=False,
 )
-
 
 # Set up digial mic
 mic = audiobusio.PDMIn(board.D10, board.D9,
@@ -134,12 +127,12 @@ for column in range(pixel_width):
             0.0,
         ]
     )
-print(column_table)
+# print(column_table)
 
 
 # MAIN LOOP -------------
 # Original dynamic_level = 10
-dynamic_level = 35  # For responding to changing volume levels
+dynamic_level = 20  # For responding to changing volume levels
 frames, start_time = 0, time.monotonic()  # For frames-per-second calc
 
 while True:
